@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v2.3 by Duy Anh
+PikPak Auto Download v2.4 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v2.3 by Duy Anh"
+APP_VERSION = "v2.4 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -93,7 +93,8 @@ STATUS_FAIL = "Lỗi tải"
 STATUS_BAD = "Lỗi - file thiếu dung lượng"     # tải xong nhưng file nhỏ hơn bản gốc -> tải lại
 RETRY_STATUSES = (STATUS_FAIL, STATUS_BAD)
 MARKED = "Đánh dấu thủ công"   # sent_at của tập bạn tự đánh dấu là đã có
-MAX_TRIES = 3                 # tự thử lại tối đa 3 lần với tập lỗi
+MAX_TRIES = 5                 # số lần quét tự tải lại 1 tập lỗi trước khi báo "hãy kiểm tra"
+RETRY_NOW = 2                 # số lượt tải lại ngay trong cùng lần tải (sau 20s, 40s)
 STALE_HOURS = 12              # "Đang tải" quá 12 giờ mà chưa có file -> cho tải lại
 STALE_FOLDER_DAYS = 14        # thư mục 14 ngày không có tập mới -> cảnh báo
 CATCHUP_MAX_DAYS = 14         # quét bù tối đa 14 ngày khi tool không chạy
@@ -1123,11 +1124,9 @@ def copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
 def _copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
     total = os.path.getsize(src)
     part = dst + ".part"
-    done = os.path.getsize(part) if os.path.isfile(part) else 0
-    if done > total:
-        done = 0
+    done = 0                                   # copy lại từ đầu (file .part dở đã bị xóa khi lỗi)
     t0, d0 = time.time(), done
-    with open(src, "rb") as fi, open(part, "ab" if done else "wb") as fo:
+    with open(src, "rb") as fi, open(part, "wb") as fo:
         fi.seek(done)
         while True:
             if stop is not None and stop.is_set():
@@ -3037,23 +3036,50 @@ class App(tk.Tk):
         """Tải lần lượt từng file: về máy -> kiểm tra dung lượng -> copy sang HDD -> lưu vào My PikPak."""
         self.q.put(("progress", 0, len(items)))
         ok_names, bad = [], 0
+        failed = []
+
+        def run(item):
+            try:
+                return self._fetch_one(cfg, item)
+            except Exception as e:
+                self._last_exc = e
+                self._fetch_fail(item, STATUS_FAIL, str(e))
+                return False
         for i, item in enumerate(items, 1):
             if self.stop_flag.is_set():
                 break
             self.q.put(("status", f"Đang tải {i}/{len(items)}: {item[2]}"))
-            try:
-                if self._fetch_one(cfg, item):
-                    ok_names.append(item[2])
-                else:
-                    bad += 1
-            except Exception as e:
-                bad += 1
-                self._last_exc = e
-                self._fetch_fail(item, STATUS_FAIL, str(e))
+            if run(item):
+                ok_names.append(item[2])
+            else:
+                failed.append(item)
             self.q.put(("progress", i, len(items)))
             if i < len(items) and not self.stop_flag.is_set():
                 self.stop_flag.wait(max(0, int(cfg.get("delay", 2) or 0)))
-        self.log(f"Tải xong {len(ok_names)}/{len(items)} file." + (f" {bad} file lỗi (lần quét sau tự thử lại)." if bad else ""))
+        # file lỗi giữa chừng (đã xóa file lỗi) -> thử tải lại ngay, tối đa RETRY_NOW lượt
+        for rnd in range(1, RETRY_NOW + 1):
+            if not failed or self.stop_flag.is_set():
+                break
+            wait = 20 * rnd
+            self.log(f"↻ Thử tải lại {len(failed)} file lỗi (lượt {rnd}/{RETRY_NOW}) sau {wait} giây...")
+            self.q.put(("status", f"Chờ {wait}s rồi tải lại {len(failed)} file lỗi..."))
+            if self.stop_flag.wait(wait):
+                break
+            again = []
+            for item in failed:
+                if self.stop_flag.is_set():
+                    again.append(item)
+                    continue
+                self.q.put(("rowstatus", item[0], f"↻  Đang tải lại (lượt {rnd})...", "dl"))
+                if run(item):
+                    ok_names.append(item[2])
+                else:
+                    again.append(item)
+            failed = again
+        bad = len(failed)
+        self.log(f"Tải xong {len(ok_names)}/{len(items)} file." + (
+            f" {bad} file vẫn lỗi - đã nằm trong danh sách tải lại (lần quét sau tự tải lại): "
+            + self._names_preview([x[2] for x in failed]) if bad else ""))
         if ok_names:
             self.q.put(("notify", f"✔ Tải xong {len(ok_names)} file", self._names_preview(ok_names)))
             self.q.put(("call", self.schedule_backup, (), {}, threading.Event()))
@@ -3069,6 +3095,27 @@ class App(tk.Tk):
         self.log(f"⚠ [{name}] {status}: {msg}")
         self.report_error(f"{status}: {name}", msg, item=item, exc=getattr(self, "_last_exc", None))
         self._last_exc = None
+
+    def _remove_broken(self, dst, size, force=False):
+        """Xóa file copy dở / lỗi (file .part và file đích nếu thiếu dung lượng). Trả về True nếu có xóa."""
+        removed = False
+        for p_ in (dst + ".part", dst):
+            try:
+                if not os.path.isfile(p_):
+                    continue
+                if p_ == dst and not force and size and os.path.getsize(p_) >= size * 0.995:
+                    continue                       # file đích đủ dung lượng -> giữ
+                for _ in range(5):                 # file có thể còn bị giữ vài giây
+                    try:
+                        os.remove(p_)
+                        removed = True
+                        self.log(f"✕ Đã xóa file lỗi: {p_}")
+                        break
+                    except PermissionError:
+                        time.sleep(2)
+            except OSError as e:
+                self.log(f"⚠ Không xóa được file lỗi {p_}: {e}")
+        return removed
 
     # ================================================================ BÁO CÁO LỖI (để copy gửi Claude)
     def report_error(self, title, msg="", item=None, exc=None):
@@ -3262,16 +3309,16 @@ class App(tk.Tk):
                 self.q.put(("rowstatus", fcode, "■  Đã dừng", "skip"))
                 return False
             if not ok:
-                self._fetch_fail(item, STATUS_FAIL, msg or "lỗi không rõ")
+                removed = self._remove_broken(dst, size)
+                self._fetch_fail(item, STATUS_FAIL, (msg or "lỗi không rõ") +
+                                 (" · đã xóa file lỗi, đưa vào danh sách tải lại" if removed else " · sẽ tải lại"))
                 return False
             got = os.path.getsize(dst) if os.path.isfile(dst) else 0
-            if size and got < size * 0.995:        # tải thiếu -> đổi tên, tải lại lần sau
-                try:
-                    os.replace(dst, dst + ".hong")
-                except OSError:
-                    pass
+            if size and got < size * 0.995:        # tải thiếu -> xóa file lỗi, tải lại
+                self._remove_broken(dst, size, force=True)
                 self.q.put(("owned_remove", fcode, folder_code, name))
-                self._fetch_fail(item, STATUS_BAD, f"{human_size(got)} / {human_size(size)} - đã đổi tên *.hong")
+                self._fetch_fail(item, STATUS_BAD, f"{human_size(got)} / {human_size(size)} - đã xóa file lỗi, "
+                                                   "đưa vào danh sách tải lại")
                 return False
             self.log(f"→ Đã copy về HDD: {dst}")
         if pk_thread is not None:

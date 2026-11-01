@@ -1,4 +1,4 @@
-PIKPAK AUTO DOWNLOAD v2.3 by Duy Anh - HƯỚNG DẪN
+PIKPAK AUTO DOWNLOAD v2.4 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
@@ -40,7 +40,8 @@ CÀI ĐẶT
 KIỂM TRA & CẢNH BÁO (chạy im lặng, chỉ báo khi có vấn đề)
    - Trước khi tải: ổ RaiDrive đã kết nối, có rclone + PikPak, ổ đích HDD đã cắm, còn đủ chỗ trống.
    - Có thể thiếu tập (số tập bị nhảy) - khung cam trong thẻ thư mục.
-   - File tải về thiếu dung lượng -> đổi tên *.hong, bỏ khỏi Danh sách đã có, lần sau tự tải lại.
+   - Copy lỗi giữa chừng (RaiDrive rớt mạng...) hoặc file thiếu dung lượng -> tool TỰ XÓA file lỗi, đưa vào danh
+     sách tải lại: thử lại ngay sau 20s và 40s; vẫn lỗi thì các lần quét sau tự tải lại (tối đa 5 lần).
    - Thư mục X ngày không có tập mới (mặc định 7).
 
 BÁO CÁO LỖI (để gửi Claude sửa)
