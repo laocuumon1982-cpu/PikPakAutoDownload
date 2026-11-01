@@ -1,17 +1,19 @@
-PIKPAK AUTO DOWNLOAD v1.0 by Duy Anh - HƯỚNG DẪN
+PIKPAK AUTO DOWNLOAD v1.1 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
    Thư mục nguồn có tập mới mỗi ngày (ổ RaiDrive Z: mount PikPak, hoặc link chia sẻ PikPak)
    -> tool quét, chỉ lấy tập CHƯA có trong "Danh sách đã có"
-   -> tải về máy:  C:\Users\admin\Downloads\Video\
-   -> copy 1 bản sang HDD theo tên phim:  O:\3 - DOWNLOAD HH3D\<Tên phim>\   (bản ở thư mục Video vẫn giữ)
+   -> tải về máy:  D:\DOWNLOAD HH3D\<Tên phim>\
    -> lưu 1 bản vào My PikPak:  My Pack/2026/<Tên phim>/   (sao chép trên máy chủ PikPak, không tốn mạng)
    -> tự thêm vào Danh sách đã có để lần sau không tải lại.
-   Đã cài sẵn: nguồn "Update HH3D kimngonx5" trên ổ Z:, thư mục tải về, thư mục HDD, My Pack/2026.
+   Đã cài sẵn: nguồn "Update HH3D kimngonx5" trên ổ Z:, thư mục tải về D:\DOWNLOAD HH3D, My Pack/2026.
+   Copy thêm sang ổ HDD rời: tắt mặc định, bật trong Cài đặt -> Lưu trữ & PikPak nếu cần.
 
 CÀI ĐẶT LẦN ĐẦU
    1. Chạy CaiDat.bat 1 lần (cài thư viện Python + tải rclone.exe vào thư mục tool).
+      Chưa có rclone.exe: mở tool sẽ hỏi tải luôn; hoặc bấm "⬇ Tải rclone.exe" (Cài đặt -> Nguồn & Tải về)
+      hoặc bấm dòng "PikPak: chưa có rclone.exe" ở thanh bên trái.
       Hoặc dùng bản exe: tải PikPakAutoDownload_Portable.zip ở mục Releases trên GitHub.
    2. Mở tool (ChayTool.bat hoặc PikPakAutoDownload.exe) -> Cài đặt:
       - Nguồn & Tải về: ổ RaiDrive = Z:\  -> bấm "Kiểm tra ổ RaiDrive ↔ PikPak (rclone)".
@@ -38,7 +40,7 @@ THÊM NGUỒN KHÁC
      Tool lưu file vào My Pack/2026/<Tên phim>/ trước rồi tải về từ đó.
 
 KIỂM TRA & CẢNH BÁO (giống tool Fshare, chạy im lặng - chỉ báo khi có vấn đề)
-   - Trước khi tải: ổ RaiDrive đã kết nối, có rclone + PikPak, thư mục tải về, ổ HDD O: đã cắm, ổ còn đủ chỗ.
+   - Trước khi tải: ổ RaiDrive đã kết nối, có rclone + PikPak, thư mục tải về, ổ còn đủ chỗ.
    - Có thể thiếu tập (số tập bị nhảy) - khung cam trong thẻ thư mục.
    - File tải về thiếu dung lượng -> đổi tên *.hong, bỏ khỏi Danh sách đã có, lần sau tự tải lại.
    - Thư mục X ngày không có tập mới (mặc định 7).

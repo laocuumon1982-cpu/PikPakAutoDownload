@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v1.0 by Duy Anh
+PikPak Auto Download v1.1 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v1.0 by Duy Anh"
+APP_VERSION = "v1.1 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -144,11 +144,11 @@ DEFAULT_CONFIG = {
     "startup_scan": True,
     "raidrive_root": "Z:\\",       # ổ RaiDrive mount PikPak
     "rd_remote_base": "",         # thư mục trên PikPak tương ứng gốc ổ RaiDrive (thường để trống)
-    "download_dir": r"C:\Users\admin\Downloads\Video",   # thư mục tải về trên máy
-    "dl_movie_sub": False,        # tạo thư mục con theo tên phim trong thư mục tải về
+    "download_dir": r"D:\DOWNLOAD HH3D",   # thư mục tải về: <thư mục>\<Tên phim>\
+    "dl_movie_sub": True,         # tạo thư mục con theo tên phim trong thư mục tải về
     "dl_method": "auto",          # auto: rclone nếu được, không thì copy từ ổ RaiDrive
     "delay": 2,
-    "organize": True,
+    "organize": False,            # copy thêm 1 bản sang HDD rời (tắt mặc định)
     "library_root": r"O:\3 - DOWNLOAD HH3D",   # ổ HDD rời: <thư mục>\<Tên phim>\
     "update_repo": "laocuumon1982-cpu/PikPakAutoDownload",
     "update_check": True,
@@ -1281,6 +1281,12 @@ class App(tk.Tk):
         self.cfg = load_json(CONFIG_FILE, DEFAULT_CONFIG)
         self._no_save = False
         self._new_machine = self._init_machine_profile()
+        if not CONFIG_FILE.exists():
+            self.cfg["cfg_rev"] = 2
+        if int(self.cfg.get("cfg_rev", 1) or 1) < 2:      # v1.1: tải về D:\DOWNLOAD HH3D\<Tên phim>, bỏ copy HDD
+            self.cfg.update(download_dir=r"D:\DOWNLOAD HH3D", dl_movie_sub=True, organize=False, cfg_rev=2)
+            for prof in (self.cfg.get("profiles") or {}).values():
+                prof.update(download_dir=r"D:\DOWNLOAD HH3D", organize=False)
         if not self.cfg.get("download_dir"):
             self.cfg["download_dir"] = default_download_dir()
         for f in self.cfg["folders"]:
@@ -1364,6 +1370,7 @@ class App(tk.Tk):
         self._resume_uploads()
         self._backup_pending = False
         self.after(1500, lambda: self.check_pikpak(silent=True))
+        self.after(2500, self._ask_rclone_first_run)
         if self._new_machine:
             self.after(900, self._new_machine_dialog)
 
@@ -1598,7 +1605,8 @@ class App(tk.Tk):
         self.side_pk = tk.Label(ck, text="☁ PikPak: đang kiểm tra...", bg=C_SIDE_CARD, fg=C_SIDE_MUTED,
                                 font=(FONT, 10), anchor="w", justify="left", wraplength=W, cursor="hand2")
         self.side_pk.pack(fill="x", pady=(4, 0))
-        self.side_pk.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("store")))
+        self.side_pk.bind("<Button-1>", lambda e: self.get_rclone() if not find_rclone() else (
+            self.select_page("settings"), self._settings_page("store")))
         self.side_bk = tk.Label(ck, text="", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9), anchor="w",
                                 justify="left", wraplength=W)
         self.side_bk.pack(fill="x")
@@ -3802,6 +3810,11 @@ class App(tk.Tk):
         g.entry("Thư mục PikPak tương ứng gốc ổ", self.rdbase_var,
                 hint="Thường để TRỐNG (gốc ổ RaiDrive = gốc PikPak). Nếu mount 1 thư mục con thì ghi đường dẫn thư mục đó.")
         fr = g.frame()
+        self.rclone_status2 = tk.StringVar()
+        ttk.Label(fr, textvariable=self.rclone_status2, style="Muted.TLabel").pack(side="left")
+        self.rclone_dl_btn2 = ttk.Button(fr, text="⬇  Tải rclone.exe", style="AccentSmall.TButton",
+                                         command=self.get_rclone)
+        fr = g.frame()
         ttk.Button(fr, text="✓  Kiểm tra ổ RaiDrive ↔ PikPak (rclone)", command=self.check_mapping).pack(side="left")
         g.label(self.map_status, foreground=C_ACCENT, font=(FONT, 10, "bold"))
         g.section("Tải về máy", "rclone tải thẳng từ PikPak (nhanh, nhiều luồng, tải tiếp khi rớt mạng). "
@@ -4018,7 +4031,7 @@ class App(tk.Tk):
         def job():
             r = find_rclone(cfg.get("rclone_path", ""))
             if not r:
-                self.q.put(("pkstatus", "☁ PikPak: chưa có rclone.exe", False))
+                self.q.put(("pkstatus", "☁ PikPak: chưa có rclone.exe - bấm vào đây để tải", False))
                 return
             remote = cfg.get("pikpak_remote", "pikpak") or "pikpak"
             conf_ok = RCLONE_CONF.is_file() and f"[{remote}]" in RCLONE_CONF.read_text(encoding="utf-8", errors="ignore")
@@ -4316,26 +4329,52 @@ class App(tk.Tk):
     def _refresh_rclone_status(self):
         if not hasattr(self, "rclone_status"):
             return
-        if find_rclone():
-            self.rclone_status.set(f"rclone.exe: ✔ có sẵn trong thư mục tool  ({RCLONE_EXE.parent})")
-            self.rclone_dl_btn.pack_forget()
-        else:
-            self.rclone_status.set(f"rclone.exe: ✘ chưa có trong thư mục tool  ({RCLONE_EXE.parent})")
-            self.rclone_dl_btn.pack(side="left", padx=10)
+        have = bool(find_rclone())
+        txt = (f"rclone.exe: ✔ có sẵn trong thư mục tool  ({RCLONE_EXE.parent})" if have else
+               f"rclone.exe: ✘ chưa có trong thư mục tool  ({RCLONE_EXE.parent})")
+        for var, btn in ((self.rclone_status, self.rclone_dl_btn),
+                         (getattr(self, "rclone_status2", None), getattr(self, "rclone_dl_btn2", None))):
+            if var is None:
+                continue
+            var.set(txt)
+            if have:
+                btn.pack_forget()
+            else:
+                btn.pack(side="left", padx=10)
+
+    def _rclone_progress(self, pct):
+        self.status_var.set(f"Đang tải rclone.exe... {pct}%")
+        for b in (getattr(self, "rclone_dl_btn", None), getattr(self, "rclone_dl_btn2", None)):
+            if b is not None:
+                b.config(text=f"⬇  Đang tải rclone... {pct}%")
+        try:
+            self.side_pk.config(text=f"☁ Đang tải rclone.exe... {pct}%")
+        except (AttributeError, tk.TclError):
+            pass
+
+    def _ask_rclone_first_run(self):
+        """Mở tool mà chưa có rclone.exe -> hỏi tải luôn (1 lần mỗi lần mở)."""
+        if find_rclone() or getattr(self, "_rclone_dl", False):
+            return
+        if messagebox.askyesno(APP_NAME, "Chưa có rclone.exe trong thư mục tool.\n\nrclone dùng để tải phim nhanh từ "
+                                         "PikPak và lưu vào My PikPak (miễn phí, ~20MB).\n\nTải về ngay?"):
+            self.get_rclone()
 
     def get_rclone(self, then=None):
         """Tải rclone.exe về thư mục tool (chạy nền)."""
         if getattr(self, "_rclone_dl", False):
             return
         self._rclone_dl = True
-        try:
-            self.rclone_dl_btn.config(state="disabled")
-        except (AttributeError, tk.TclError):
-            pass
+        for b in (getattr(self, "rclone_dl_btn", None), getattr(self, "rclone_dl_btn2", None)):
+            try:
+                b.config(state="disabled")
+            except (AttributeError, tk.TclError):
+                pass
 
         def job():
             try:
-                download_rclone(lambda pct: self.q.put(("status", f"Đang tải rclone.exe... {pct}%")))
+                download_rclone(lambda pct: self.q.put(("call", lambda p=pct: self._rclone_progress(p), (), {},
+                                                        threading.Event())))
                 self.q.put(("call", lambda: (self.log("✔ Đã tải rclone.exe vào thư mục tool."),
                                              self.status_var.set("Đã tải rclone.exe."),
                                              self._refresh_rclone_status(), self.check_pikpak(silent=True),
@@ -4348,8 +4387,10 @@ class App(tk.Tk):
                             (), {}, threading.Event()))
             finally:
                 self._rclone_dl = False
-                self.q.put(("call", lambda: self.rclone_dl_btn.config(state="normal") if hasattr(self, "rclone_dl_btn") else None,
-                            (), {}, threading.Event()))
+                self.q.put(("call", lambda: [b.config(state="normal", text=t) for b, t in (
+                    (getattr(self, "rclone_dl_btn", None), "⬇  Tải rclone.exe về thư mục tool"),
+                    (getattr(self, "rclone_dl_btn2", None), "⬇  Tải rclone.exe")) if b is not None],
+                    (), {}, threading.Event()))
         threading.Thread(target=job, daemon=True).start()
 
     def _need_rclone(self, parent=None, then=None):

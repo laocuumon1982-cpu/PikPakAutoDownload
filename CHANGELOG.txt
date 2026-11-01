@@ -1,6 +1,11 @@
 PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v1.1  (01/11/2026)
+  - Tải về D:\DOWNLOAD HH3D\<Tên phim>\ (tự đổi cấu hình cũ). Bỏ bước copy sang HDD (vẫn bật lại được).
+  - Nút "⬇ Tải rclone.exe" ở Cài đặt -> Nguồn & Tải về; bấm dòng "PikPak: chưa có rclone.exe" ở thanh bên để tải;
+    mở tool chưa có rclone thì hỏi tải luôn; hiện % khi tải.
+
 v1.0  (01/11/2026)
   - Bản đầu tiên, dựa trên nguyên lý Fshare Auto Download v6.4.
   - Nguồn: thư mục trên ổ RaiDrive (PikPak WebDAV) và link chia sẻ PikPak; quét cả thư mục con.
