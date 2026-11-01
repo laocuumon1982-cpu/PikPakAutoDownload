@@ -1,0 +1,12 @@
+PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
+=================================================
+
+v1.0  (01/11/2026)
+  - Bản đầu tiên, dựa trên nguyên lý Fshare Auto Download v6.4.
+  - Nguồn: thư mục trên ổ RaiDrive (PikPak WebDAV) và link chia sẻ PikPak; quét cả thư mục con.
+  - Tải về máy bằng rclone (nhanh, nhiều luồng, tải tiếp khi rớt mạng); tự chuyển sang copy từ ổ RaiDrive khi
+    không có rclone / rclone lỗi.
+  - Copy 1 bản sang HDD theo tên phim; lưu 1 bản vào My PikPak (sao chép trên máy chủ, không tốn mạng).
+  - Nguồn nhiều phim: tự tách tên phim theo thư mục con hoặc tên file.
+  - Giữ: Danh sách đã có, tự quét, kiểm tra trước khi tải, báo thiếu tập / file thiếu dung lượng / thư mục lâu
+    không có tập mới, thư mục Data, nút Cập nhật qua GitHub, hồ sơ nhiều máy, sao lưu lên PikPak.
