@@ -1,46 +1,41 @@
-PIKPAK AUTO DOWNLOAD v1.1 by Duy Anh - HƯỚNG DẪN
+PIKPAK AUTO DOWNLOAD v2.0 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
-   Thư mục nguồn có tập mới mỗi ngày (ổ RaiDrive Z: mount PikPak, hoặc link chia sẻ PikPak)
-   -> tool quét, chỉ lấy tập CHƯA có trong "Danh sách đã có"
-   -> tải về máy:  D:\DOWNLOAD HH3D\<Tên phim>\
-   -> lưu 1 bản vào My PikPak:  My Pack/2026/<Tên phim>/   (sao chép trên máy chủ PikPak, không tốn mạng)
-   -> tự thêm vào Danh sách đã có để lần sau không tải lại.
-   Đã cài sẵn: nguồn "Update HH3D kimngonx5" trên ổ Z:, thư mục tải về D:\DOWNLOAD HH3D, My Pack/2026.
-   Copy thêm sang ổ HDD rời: tắt mặc định, bật trong Cài đặt -> Lưu trữ & PikPak nếu cần.
+   Mỗi "thư mục phim" gồm:  NGUỒN  ->  ĐÍCH ĐẾN
+   - Nguồn: link chia sẻ PikPak (mypikpak.com/s/...) hoặc thư mục trên ổ RaiDrive (VD Z:\Update HH3D kimngonx5)
+   - Đích HDD (copy):      VD D:\DOWNLOAD HH3D\<Tên phim>\
+   - Đích My PikPak (save): VD My Pack/2026/<Tên phim>/   (sao chép trên máy chủ PikPak, không tốn mạng)
+   Tool quét nguồn, chỉ lấy tập CHƯA có trong "Danh sách đã có" -> save My PikPak -> copy về HDD
+   -> thêm vào Danh sách đã có để lần sau không tải lại.
 
-CÀI ĐẶT LẦN ĐẦU
-   1. Chạy CaiDat.bat 1 lần (cài thư viện Python + tải rclone.exe vào thư mục tool).
-      Chưa có rclone.exe: mở tool sẽ hỏi tải luôn; hoặc bấm "⬇ Tải rclone.exe" (Cài đặt -> Nguồn & Tải về)
-      hoặc bấm dòng "PikPak: chưa có rclone.exe" ở thanh bên trái.
-      Hoặc dùng bản exe: tải PikPakAutoDownload_Portable.zip ở mục Releases trên GitHub.
-   2. Mở tool (ChayTool.bat hoặc PikPakAutoDownload.exe) -> Cài đặt:
-      - Nguồn & Tải về: ổ RaiDrive = Z:\  -> bấm "Kiểm tra ổ RaiDrive ↔ PikPak (rclone)".
-        Thấy "✔ Khớp" là rclone tải thẳng từ PikPak được (nhanh, tải tiếp khi rớt mạng).
-        Nếu báo không khớp: ổ Z mount 1 thư mục con của PikPak -> ghi thư mục đó vào ô
-        "Thư mục PikPak tương ứng gốc ổ" (tool cũng tự thử đoán VD "My Pack").
-      - Lưu trữ & PikPak: bấm "Tài khoản PikPak..." nhập email / mật khẩu PikPak (tool nhớ, mật khẩu mã hóa).
-        Tài khoản này dùng cho rclone (tải nhanh + lưu My PikPak) và để đọc link chia sẻ.
-   3. Tab Thư mục phim -> "Update HH3D kimngonx5" -> bấm "Quét file" -> tích những tập ĐÃ CÓ
-      -> "Thêm vào Danh sách đã có" -> "Lưu". (Bước duyệt này để tool không tải lại tập cũ.)
-   4. Tab Quét & Tải -> "Quét & Tải". Hoặc bật "Tự quét mỗi 60 phút" ở thanh bên trái.
+LẦN ĐẦU
+   1. Chạy CaiDat.bat (hoặc dùng bản exe ở mục Releases trên GitHub). Chưa có rclone.exe: tool hỏi tải luôn.
+   2. Cài đặt -> My PikPak: "Đổi tài khoản PikPak..." nhập email / mật khẩu -> "Kiểm tra kết nối".
+      Bảng trạng thái hiện: kết nối (ms), tài khoản đang dùng, dung lượng đã dùng / còn trống, phiên bản rclone.
+   3. Cài đặt -> RaiDrive: ổ = Z:\ -> "Kiểm tra trạng thái" (ổ có kết nối không, RaiDrive.exe có chạy, dung
+      lượng, thời gian phản hồi) -> "Kiểm tra khớp với PikPak (rclone)" để rclone tải thẳng từ PikPak (nhanh).
+   4. Tab Thư mục phim -> "Sửa" thư mục có sẵn (hoặc "＋ Thêm thư mục"):
+      Nguồn phim · Tên phim · Ghi chú · Copy về HDD · Save vào My PikPak · (tạo thư mục con theo tên phim).
+      Khung xanh bên dưới cho xem trước đường dẫn đích.
+   5. "Quét file" -> tích những tập ĐÃ CÓ -> "Thêm vào Danh sách đã có" -> "Lưu" (để không tải lại tập cũ).
+   6. Bấm "⬇ Tải mới" ở thẻ thư mục (chỉ thư mục đó) hoặc tab Quét & Tải -> "Quét & Tải" (tất cả).
+      Hoặc bật "Tự quét mỗi 60 phút" ở thanh bên trái.
 
 NGUỒN CÓ NHIỀU PHIM
-   Thư mục "Update HH3D kimngonx5" chứa nhiều phim -> tool tự tách tên phim:
-   - Có thư mục con cấp 1 (VD Z:\Update HH3D kimngonx5\Tiên Nghịch\...) -> tên phim = tên thư mục con.
-   - File nằm thẳng trong thư mục -> tên phim lấy từ tên file, bỏ số tập và [tag]:
-     "[HH3D] Tiên Nghịch - Tập 98 [4K].mp4" -> "Tiên Nghịch".
-   Đổi cách tách: nút "Sửa" của thư mục -> "Tách tên phim". Cột PHIM ở tab Quét & Tải cho xem trước.
+   Tool tự tách tên phim: theo thư mục con cấp 1, không có thì theo tên file (bỏ số tập, [tag]):
+   "[HH3D] Tiên Nghịch - Tập 98 [4K].mp4" -> "Tiên Nghịch". Đổi cách tách: Sửa -> NÂNG CAO.
 
-THÊM NGUỒN KHÁC
-   - Thư mục trên ổ RaiDrive: "＋ Thêm thư mục" -> Chọn... Đường dẫn lưu theo kiểu không phụ thuộc ký tự ổ
-     (máy khác mount ổ chữ khác chỉ cần đặt lại "Ổ RaiDrive" trong Cài đặt).
-   - Link chia sẻ PikPak: dán https://mypikpak.com/s/XXXX (có mật khẩu: ...?pwd=xxxx).
-     Tool lưu file vào My Pack/2026/<Tên phim>/ trước rồi tải về từ đó.
+CÀI ĐẶT
+   - Chung: tự quét, khởi động cùng Windows, khay hệ thống, thông báo; cách tải, GIỚI HẠN TỐC ĐỘ (VD 20M),
+     nghỉ giữa 2 file, đuôi file; kiểm tra trước khi tải, nhắc thư mục lâu không có tập mới.
+   - My PikPak: trạng thái kết nối + tài khoản + dung lượng, đổi tài khoản, tải rclone, thư mục mặc định.
+   - RaiDrive: trạng thái ổ, tự kiểm tra mỗi N phút (mất kết nối là có thông báo), kiểm tra khớp với PikPak.
+   - Máy này & Sao lưu: hồ sơ nhiều máy, sao lưu dữ liệu lên PikPak / ra file, mở thư mục Data.
+   Thanh bên trái (mục Kết nối) luôn hiện trạng thái RaiDrive và PikPak - bấm vào để mở trang tương ứng.
 
-KIỂM TRA & CẢNH BÁO (giống tool Fshare, chạy im lặng - chỉ báo khi có vấn đề)
-   - Trước khi tải: ổ RaiDrive đã kết nối, có rclone + PikPak, thư mục tải về, ổ còn đủ chỗ.
+KIỂM TRA & CẢNH BÁO (chạy im lặng, chỉ báo khi có vấn đề)
+   - Trước khi tải: ổ RaiDrive đã kết nối, có rclone + PikPak, ổ đích HDD đã cắm, còn đủ chỗ trống.
    - Có thể thiếu tập (số tập bị nhảy) - khung cam trong thẻ thư mục.
    - File tải về thiếu dung lượng -> đổi tên *.hong, bỏ khỏi Danh sách đã có, lần sau tự tải lại.
    - Thư mục X ngày không có tập mới (mặc định 7).
@@ -49,4 +44,3 @@ DỮ LIỆU & CẬP NHẬT
    - Mọi dữ liệu nằm trong thư mục Data cạnh tool. Lên bản mới: chép thư mục Data sang là xong.
    - Nút "⟳ Cập nhật" góc trên: tự báo bản mới trên GitHub (laocuumon1982-cpu/PikPakAutoDownload) hoặc cập nhật
      từ file zip; thư mục Data luôn giữ nguyên.
-   - Tab Lịch sử tải: xem file đã tải, đường dẫn HDD, trạng thái lưu My PikPak; "☁ Lưu lại vào My PikPak" khi lỗi.

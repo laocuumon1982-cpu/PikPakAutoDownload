@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v1.1 by Duy Anh
+PikPak Auto Download v2.0 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v1.1 by Duy Anh"
+APP_VERSION = "v2.0 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -75,8 +75,8 @@ RCLONE_CONF = DATA_DIR / "rclone.conf"      # cấu hình rclone (đăng nhập 
 BACKUP_FILES = ("config.json", "owned.json", "history.json")
 BACKUP_DIR = "_Backup PikPakAutoDownload"
 MACHINE = (os.environ.get("COMPUTERNAME") or "").strip() or __import__("socket").gethostname()
-PATH_KEYS = ("download_dir", "library_root", "raidrive_root")
-MACHINE_KEYS = PATH_KEYS + ("organize", "pikpak_root", "start_with_windows")
+PATH_KEYS = ("raidrive_root",)
+MACHINE_KEYS = PATH_KEYS + ("rd_remote_base", "start_with_windows")
 LOG_FILE = DATA_DIR / "log.txt"
 
 BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"
@@ -99,33 +99,39 @@ STALE_FOLDER_DAYS = 14        # thư mục 14 ngày không có tập mới -> c�
 CATCHUP_MAX_DAYS = 14         # quét bù tối đa 14 ngày khi tool không chạy
 WATCH_STATUSES = (STATUS_OPENED, STATUS_DL)
 
-# ----- màu giao diện (v5.7: Graphite & Teal)
-C_BG = "#eef1f5"
-C_CARD = "#ffffff"
-C_ACCENT = "#0e9384"
-C_ACCENT_HOVER = "#0b7a6e"
-C_ACCENT_DIS = "#9bd5cd"
-C_SOFT = "#ecf7f5"           # nền nhạt cho thanh công cụ
-C_SOFT_BORDER = "#cfe9e4"
-C_SEL = "#d3efe9"            # dòng đang chọn
-C_HEAD = "#f5f7f9"           # tiêu đề bảng
-C_TEXT = "#17212b"
-C_MUTED = "#64707d"
-C_BORDER = "#e1e5ea"
-C_GREEN = "#16a34a"
-C_ORANGE = "#d97706"
-C_RED = "#dc2626"
-C_BLUE = "#2563eb"
-C_SIDE = "#101418"
-C_SIDE_CARD = "#171c22"
-C_SIDE_HOVER = "#1d242c"
-C_SIDE_ACTIVE = "#5eead4"
+# ----- màu giao diện (v2.0: Industrial - than chì + cam hổ phách)
+C_BG = "#0d1014"             # nền cửa sổ
+C_CARD = "#151a20"           # khung nội dung
+C_PANEL = "#1b2129"          # ô / bảng điều khiển bên trong
+C_FIELD = "#0f1318"          # ô nhập
+C_ACCENT = "#f5a524"         # cam hổ phách (đèn báo máy)
+C_ACCENT_HOVER = "#ffb84d"
+C_ACCENT_DIS = "#5a4520"
+C_ON_ACCENT = "#14110a"      # chữ trên nút cam
+C_SOFT = "#1a2028"           # nền thanh công cụ
+C_SOFT_BORDER = "#2a323c"
+C_SEL = "#2b3542"            # dòng đang chọn
+C_HEAD = "#1a2027"           # tiêu đề bảng
+C_ODD = "#181d24"            # dòng lẻ
+C_TEXT = "#e4e8ec"
+C_MUTED = "#8b96a3"
+C_BORDER = "#29313b"
+C_GREEN = "#3ddc84"
+C_ORANGE = "#f5a524"
+C_RED = "#ff5c5c"
+C_BLUE = "#4cc9f0"           # "mới" - xanh cyan
+C_WARN_BG = "#2a2013"
+C_SIDE = "#090b0e"
+C_SIDE_CARD = "#11151a"
+C_SIDE_HOVER = "#1a1f26"
+C_SIDE_ACTIVE = "#f5a524"
 SIDE_W = 430          # thanh bên trái (mở rộng)
 SIDE_W_MINI = 64      # thanh bên trái (thu gọn)
 SIDE_MIN, SIDE_MAX = 240, 700   # giới hạn khi kéo đổi độ rộng
-C_SIDE_TEXT = "#d0d7de"
-C_SIDE_MUTED = "#6e7a86"
+C_SIDE_TEXT = "#c9d1d9"
+C_SIDE_MUTED = "#5f6b78"
 FONT = "Segoe UI"
+MONO = "Consolas"             # số liệu kiểu màn hình máy
 
 ICON64 = "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"
 ICON28 = "iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAFbklEQVR42pWW+4ucZxXHP+e8l5md2dlEWVq00BRjQ1NErD8YElutiUIsJIEtK9SiSL1A9gcNaERQXFbFC80PFewu7T+gNCYiipdSCaQlodVCqYSK9Ubxlq5pNjvZmX3feZ5z/OGdmZ29JGEfeN4fXs5zvuec77kJuMzOInNzYge+5Q95aifc2IfTwgERYTvH3RFAaIvyogR94sI35Vezs65zc7hMT3ty+rTE/bO9+aSWHncHCw7msD2oEVBABU0FEYhFWLg4l81MT3siAPu/UczXWvnxst2zvrDeSqcMP+B+AyFzQyBvZVq0y4WL36nNyP1f7x7WrP7rWPYCeMIt/BIREoUQnWiVcJoKApg5vqW/EpM8S623+vGUKCdFcIlR5CZ8uUOiUPacdgE7mzBRF8zhyrJhDuNjlZyvt1rcTSRkTpSTqUTb51aIuic38yxR6HScyR3CZw+lHHpfwttbgplz6Q3n9POBi69Farmg0udxGH5PvCwQt33y4S93Hbetw6eVparQ7sB736V877Eakzu2DsTPLwS+/5OSWj6SPBsUphKCIyLDOPSFkgS6XacXqoS9Y1I59YUaO5qyKdSDMB47kLLUduZ/VtBqCjGO6BTAg6diLhtNUYXla86eOxOO3Z+x6x0Jd0wKO5rCsy8U/PLcKgBHD9b56AdruINKZdgjB1POniu42jZqGcSwjlBJJfomrtrLztSDOV/8RJ1GXdZ586/LxvN/KAG47958+F8V3CDPhCP7M5462yVtCokKNsKYSjQGN3Gju2Lcd7fytU+P0agLIYIZhAAikGfQagqtppBnbIqMO3zuWI0nT44znkMojMTWMFTNGd7oeDAeO1oHIEZIk0qRjBS5WXW3KniR6t0H3pPylU81CIUhoxhDZDNCYdw2AXvuSocWD060SpH5aCOp/kXb7Gk0eOD9GffsUoqOod7HkegMLtFJcJItGlueVZk7VpNhZo7VhCRhU2hF1vLk9p1CLA3tY6QyYnIusPSW8Z/Lkd27UswqkOXrztlnu6SJ8OqfeuRZ1cp+/2rJauGE4Dx8eIyJ8cqY0X61uBjJcCSC+BZJU3aNn/5iBZHKixih2RA6XefbT7Z5+VJV2HkOL18q+cFTbRavGs1GlY0DDlXhhZcK/vx6SSOrcqMf0jVA6xkTY/Db51b4zXMd0rTqNgAzjzaZ+WST7mqlVAVWV+HIoTpf/fz4Gtexisq1ZeNHTy+RizOKsakOMWe8Bqd+eBWLzuGPNYecfukzTf79P+OlV0pUnHv3ZMydmBjW7+C8uRj57qmrXFkMNBtCDGucypGpf/rG2Sn9wV2WsHt3xtt2Km6Vt92u88f/Ki7CXROBd04mhOhD3szgr3/rsXTNaIxV7W2UUzl67A2/4YRIhNXCiaGa/oMRlY+nuAp2vUfZbwjD7ihVt0lStpwJqUTbkFdrD1euR1RhXZUYrL5VVmNVIdnw0gw0FQiC+OapmqqJuNu6iakC3Y4zNTXBAw+OY+ao3nzBcXNEhX/8veTp+SvIRjQHEZWUGFYUbVagMpyD3jN23Zlzz97atgBrOaQ4NjL1cEdEccKKTB16/Xdp2vhIL3RMRJJRi0KE1oRua2HrrBhuVBz6cHOMWdrQEDrn0iTwuKocTFzcbY1PEcgVOkthW4CaVKuhD0vBXUVdTSQJPC4AD3/otflGfvvxbvmm9ZuhymBUi2zaim64i1b1hA/eepWnY/lt2ikvL5w5v3dGp6efSc6c3ztTFIsLuTQ0o64aQWKsmnq/JUm4xR3IREdjRCNk1DWXhhbF4sKZ83tnpqefSWR01X/kwF8eAk4YYZ9Aq2/gdvdvrxKEtpK+CDzx4wvvHq76/wcfdelN5/BKZQAAAABJRU5ErkJggg=="
@@ -165,8 +171,12 @@ DEFAULT_CONFIG = {
     "health_check": True,
     "stale_days": 7,
     "extensions": ".mkv .mp4 .avi .ts .m4v .mov",
+    "bwlimit": "",                # giới hạn tốc độ rclone, VD 20M (trống = không giới hạn)
+    "rd_check_min": 2,            # kiểm tra trạng thái RaiDrive mỗi N phút (0 = tắt)
     "folders": [{"id": "hh3dkimngo", "name": "Update HH3D kimngonx5", "url": "@RD@\\Update HH3D kimngonx5",
-                 "enabled": True, "split": "auto", "note": "Ổ Z (PikPak - Thúng)"}],
+                 "enabled": True, "split": "auto", "note": "Ổ Z (PikPak - Thúng)",
+                 "local_dir": r"D:\DOWNLOAD HH3D", "pikpak_dir": "My Pack/2026", "sub_movie": True,
+                 "dest_rev": 3}],
 }
 
 
@@ -302,12 +312,11 @@ def safe_name(name):
 
 
 def local_dir_for(cfg, folder_cfg, movie):
-    """Thư mục trên HDD của 1 phim: <Thư mục phim HDD (hoặc ô 'Thư mục trên HDD' của nguồn)>\\<Tên phim>."""
-    d = from_portable((folder_cfg or {}).get("local_dir", "").strip())
-    if d:
-        return d if (folder_cfg or {}).get("split") == "folder" else os.path.join(d, safe_name(movie))
-    root = from_portable(cfg.get("library_root", "").strip())
-    return os.path.join(root, safe_name(movie)) if root and movie else ""
+    """Đích đến trên HDD của 1 phim: <Đích HDD của thư mục>[\\<Tên phim>] ('' nếu không copy về HDD)."""
+    d = from_portable(str((folder_cfg or {}).get("local_dir", "") or "").strip())
+    if not d:
+        return ""
+    return os.path.join(d, safe_name(movie)) if (folder_cfg or {}).get("sub_movie", True) and movie else d
 
 
 _TAG_RE = re.compile(r"\[[^\]]*\]|\([^)]*\)|【[^】]*】")
@@ -541,11 +550,11 @@ def pikpak_join(*parts):
 
 
 def pikpak_folder(cfg, folder_cfg, movie):
-    """<Thư mục lưu My PikPak>[/<thư mục con của nguồn>][/<Tên phim>]"""
-    parts = [cfg.get("pikpak_root", ""), (folder_cfg or {}).get("pikpak_dir", "").strip()]
-    if cfg.get("pk_movie_sub", True):
-        parts.append(safe_name(movie or "Khác"))
-    return pikpak_join(*parts)
+    """Đích đến trên My PikPak: <Đích PikPak của thư mục>[/<Tên phim>] ('' nếu không lưu)."""
+    base = pikpak_join(str((folder_cfg or {}).get("pikpak_dir", "") or ""))
+    if not base:
+        return ""
+    return pikpak_join(base, safe_name(movie or "Khác")) if (folder_cfg or {}).get("sub_movie", True) else base
 
 
 def pikpak_dest(cfg, folder_cfg, movie):
@@ -1291,6 +1300,11 @@ class App(tk.Tk):
             self.cfg["download_dir"] = default_download_dir()
         for f in self.cfg["folders"]:
             fid(f)
+            if not f.get("dest_rev"):        # v2.0: đích đến (HDD / My PikPak) nằm trong từng thư mục phim
+                hdd = f.get("local_dir") or to_portable(self.cfg.get("download_dir", "") or "")
+                pk = pikpak_join(self.cfg.get("pikpak_root", ""), f.get("pikpak_dir", "")) if \
+                    self.cfg.get("pikpak_on", True) else ""
+                f.update(local_dir=hdd, pikpak_dir=pk, sub_movie=True, dest_rev=3)
         self.tray = None
         self.next_auto_ts = None
         self._tray_hint_shown = False
@@ -1371,6 +1385,7 @@ class App(tk.Tk):
         self._backup_pending = False
         self.after(1500, lambda: self.check_pikpak(silent=True))
         self.after(2500, self._ask_rclone_first_run)
+        self.after(1200, self._rd_tick)
         if self._new_machine:
             self.after(900, self._new_machine_dialog)
 
@@ -1439,64 +1454,80 @@ class App(tk.Tk):
         st.theme_use("clam")
         base = tkfont.Font(family=FONT, size=10)
         self.row_h = max(30, base.metrics("linespace") + 14)     # dòng bảng đủ cao, không cắt chữ
-        st.configure(".", background=C_BG, foreground=C_TEXT, font=(FONT, 10), bordercolor=C_BORDER)
+        self.option_add("*TCombobox*Listbox.background", C_PANEL)
+        self.option_add("*TCombobox*Listbox.foreground", C_TEXT)
+        self.option_add("*TCombobox*Listbox.selectBackground", C_ACCENT)
+        self.option_add("*TCombobox*Listbox.selectForeground", C_ON_ACCENT)
+        self.option_add("*Menu.background", C_PANEL)
+        self.option_add("*Menu.foreground", C_TEXT)
+        self.option_add("*Menu.activeBackground", C_ACCENT)
+        self.option_add("*Menu.activeForeground", C_ON_ACCENT)
+        self.option_add("*Menu.relief", "flat")
+        st.configure(".", background=C_BG, foreground=C_TEXT, font=(FONT, 10), bordercolor=C_BORDER,
+                     troughcolor=C_PANEL, focuscolor=C_ACCENT, insertcolor=C_TEXT)
         st.configure("Card.TFrame", background=C_CARD)
+        st.configure("Panel.TFrame", background=C_PANEL)
         st.configure("Bg.TFrame", background=C_BG)
         st.configure("TLabel", background=C_CARD, foreground=C_TEXT)
         st.configure("Muted.TLabel", background=C_CARD, foreground=C_MUTED, font=(FONT, 9))
-        st.configure("Section.TLabel", background=C_CARD, foreground=C_TEXT, font=(FONT, 12, "bold"))
-        st.configure("Status.TLabel", background=C_BG, foreground=C_MUTED, font=(FONT, 9))
-        st.configure("TCheckbutton", background=C_CARD)
-        st.map("TCheckbutton", background=[("active", C_CARD)])
-        st.configure("Side.TNotebook", background=C_BG, borderwidth=0, tabmargins=(0, 0, 0, 0))
+        st.configure("Section.TLabel", background=C_CARD, foreground=C_ACCENT, font=(FONT, 10, "bold"))
+        st.configure("Status.TLabel", background=C_BG, foreground=C_MUTED, font=(MONO, 9))
+        st.configure("TCheckbutton", background=C_CARD, foreground=C_TEXT, indicatorbackground=C_FIELD,
+                     indicatorforeground=C_ACCENT, indicatorrelief="flat")
+        st.map("TCheckbutton", background=[("active", C_CARD)], foreground=[("disabled", C_MUTED)],
+               indicatorbackground=[("selected", C_FIELD)])
+        st.configure("Side.TNotebook", background=C_BG, borderwidth=0, tabmargins=(0, 0, 0, 0), bordercolor=C_BG,
+                     lightcolor=C_BG, darkcolor=C_BG)
         st.layout("Side.TNotebook.Tab", [])
-        st.configure("TButton", padding=(12, 6), background="#edf0f3", foreground=C_TEXT,
-                     borderwidth=0, focusthickness=0, font=(FONT, 10))
-        st.map("TButton", background=[("active", "#e1e6eb"), ("disabled", "#f3f4f6")],
-               foreground=[("disabled", "#9ca3af")])
+        st.configure("TButton", padding=(12, 6), background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
+                     lightcolor=C_PANEL, darkcolor=C_PANEL, borderwidth=1, focusthickness=0, font=(FONT, 10))
+        st.map("TButton", background=[("active", "#252d37"), ("disabled", C_CARD)],
+               foreground=[("disabled", "#55606c")], bordercolor=[("active", C_ACCENT)])
         st.configure("Small.TButton", padding=(8, 4), font=(FONT, 9))
-        st.configure("Accent.TButton", background=C_ACCENT, foreground="white", font=(FONT, 10, "bold"),
-                     padding=(14, 7))
-        st.map("Accent.TButton", background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)],
-               foreground=[("disabled", "#effaf8")])
-        st.configure("AccentSmall.TButton", background=C_ACCENT, foreground="white", font=(FONT, 9, "bold"),
-                     padding=(10, 4))
-        st.map("AccentSmall.TButton", background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)])
-        st.configure("Success.TButton", background=C_GREEN, foreground="white", font=(FONT, 10, "bold"),
-                     padding=(16, 7))
-        st.map("Success.TButton", background=[("active", "#15803d"), ("disabled", "#a7dcb8")],
-               foreground=[("disabled", "#ecfdf5")])
-        st.configure("Danger.TButton", background="#fee2e2", foreground=C_RED)
-        st.map("Danger.TButton", background=[("active", "#fecaca"), ("disabled", "#f3f4f6")],
-               foreground=[("disabled", "#d1d5db")])
-        st.configure("DangerSmall.TButton", background="#fee2e2", foreground=C_RED, padding=(8, 4), font=(FONT, 9))
-        st.map("DangerSmall.TButton", background=[("active", "#fecaca")])
-        st.configure("TEntry", fieldbackground="white", bordercolor=C_BORDER, lightcolor=C_BORDER,
-                     darkcolor=C_BORDER, padding=6)
-        st.map("TEntry", bordercolor=[("focus", C_ACCENT)], lightcolor=[("focus", C_ACCENT)])
-        st.configure("TCombobox", fieldbackground="white", bordercolor=C_BORDER, lightcolor=C_BORDER,
-                     darkcolor=C_BORDER, padding=5, arrowsize=12)
-        st.map("TCombobox", fieldbackground=[("readonly", "white")])
-        st.configure("TSpinbox", fieldbackground="white", bordercolor=C_BORDER, lightcolor=C_BORDER,
-                     darkcolor=C_BORDER, padding=4, arrowsize=12)
-        st.configure("Pro.Treeview", background="white", fieldbackground="white", foreground=C_TEXT,
+        for name, pad, fs in (("Accent.TButton", (14, 7), 10), ("AccentSmall.TButton", (10, 4), 9)):
+            st.configure(name, background=C_ACCENT, foreground=C_ON_ACCENT, bordercolor=C_ACCENT,
+                         lightcolor=C_ACCENT, darkcolor=C_ACCENT, font=(FONT, fs, "bold"), padding=pad)
+            st.map(name, background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)],
+                   foreground=[("disabled", "#a08455")], bordercolor=[("active", C_ACCENT_HOVER)])
+        st.configure("Success.TButton", background=C_ACCENT, foreground=C_ON_ACCENT, bordercolor=C_ACCENT,
+                     lightcolor=C_ACCENT, darkcolor=C_ACCENT, font=(FONT, 10, "bold"), padding=(16, 7))
+        st.map("Success.TButton", background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)])
+        for name, pad, fs in (("Danger.TButton", (12, 6), 10), ("DangerSmall.TButton", (8, 4), 9)):
+            st.configure(name, background="#2a1416", foreground=C_RED, bordercolor="#4a1f22",
+                         lightcolor="#2a1416", darkcolor="#2a1416", padding=pad, font=(FONT, fs))
+            st.map(name, background=[("active", "#3a1a1d")], foreground=[("disabled", "#6b3a3d")])
+        for name, pad in (("TEntry", 6), ("TCombobox", 5), ("TSpinbox", 4)):
+            st.configure(name, fieldbackground=C_FIELD, foreground=C_TEXT, bordercolor=C_BORDER,
+                         lightcolor=C_FIELD, darkcolor=C_FIELD, padding=pad, arrowsize=12, insertcolor=C_ACCENT,
+                         arrowcolor=C_MUTED, background=C_PANEL, selectbackground=C_ACCENT,
+                         selectforeground=C_ON_ACCENT)
+            st.map(name, bordercolor=[("focus", C_ACCENT)], lightcolor=[("focus", C_FIELD)],
+                   fieldbackground=[("readonly", C_FIELD), ("disabled", C_CARD)],
+                   foreground=[("readonly", C_TEXT), ("disabled", C_MUTED)])
+        st.configure("Pro.Treeview", background=C_CARD, fieldbackground=C_CARD, foreground=C_TEXT,
                      rowheight=self.row_h, borderwidth=0, font=(FONT, 10))
-        st.configure("Pro.Treeview.Heading", background=C_HEAD, foreground=C_MUTED,
-                     font=(FONT, 9, "bold"), borderwidth=0, padding=(8, 8), relief="flat")
-        st.map("Pro.Treeview.Heading", background=[("active", "#e6eaee")])
+        st.configure("Pro.Treeview.Heading", background=C_HEAD, foreground=C_MUTED, bordercolor=C_BORDER,
+                     lightcolor=C_HEAD, darkcolor=C_HEAD, font=(FONT, 8, "bold"), borderwidth=0, padding=(8, 8),
+                     relief="flat")
+        st.map("Pro.Treeview.Heading", background=[("active", C_PANEL)], foreground=[("active", C_ACCENT)])
         st.map("Pro.Treeview", background=[("selected", C_SEL)], foreground=[("selected", C_TEXT)])
         st.layout("Pro.Treeview", [("Treeview.treearea", {"sticky": "nswe"})])
-        st.configure("Pro.Horizontal.TProgressbar", troughcolor="#e6eaee", background=C_ACCENT,
-                     bordercolor="#e6eaee", lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=6)
-        st.configure("Vertical.TScrollbar", background="#e6eaee", troughcolor=C_CARD, borderwidth=0, arrowsize=12)
+        st.configure("Pro.Horizontal.TProgressbar", troughcolor=C_PANEL, background=C_ACCENT,
+                     bordercolor=C_PANEL, lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=6)
+        st.configure("Vertical.TScrollbar", background=C_PANEL, troughcolor=C_CARD, borderwidth=0, arrowsize=12,
+                     bordercolor=C_CARD, lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED)
+        st.map("Vertical.TScrollbar", background=[("active", "#2a333e")])
         st.configure("TPanedwindow", background=C_CARD)
         st.configure("Sash", sashthickness=8, gripcount=0, background=C_BORDER)
+        st.configure("TMenubutton", background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
+                     lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED, padding=(10, 5))
+        st.map("TMenubutton", background=[("active", "#252d37")])
 
     def _tree(self, parent, cols, heads, widths, anchors=None, height=12, check=False, stretch=None):
         wrap = ttk.Frame(parent, style="Card.TFrame")
         border = tk.Frame(wrap, bg=C_BORDER, padx=1, pady=1)
         border.pack(fill="both", expand=True)
-        inner = tk.Frame(border, bg="white")
+        inner = tk.Frame(border, bg=C_CARD)
         inner.pack(fill="both", expand=True)
         tree = ttk.Treeview(inner, columns=cols, show=("tree headings" if check else "headings"),
                             style="Pro.Treeview", height=height)
@@ -1510,12 +1541,12 @@ class App(tk.Tk):
         tree.configure(yscrollcommand=sb.set)
         tree.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
-        tree.tag_configure("odd", background="#f9fafb")
+        tree.tag_configure("odd", background=C_ODD)
         tree.tag_configure("new", foreground=C_BLUE)
         tree.tag_configure("dl", foreground=C_ORANGE)
         tree.tag_configure("done", foreground=C_GREEN)
         tree.tag_configure("err", foreground=C_RED)
-        tree.tag_configure("skip", foreground="#9ca3af")
+        tree.tag_configure("skip", foreground="#5f6b78")
         return wrap, tree
 
     def _build_sidebar(self, parent):
@@ -1535,7 +1566,7 @@ class App(tk.Tk):
             tk.Label(self.side_brand, image=self.icon_small, bg=C_SIDE).pack(side="left", padx=(0, 10))
         bt = tk.Frame(self.side_brand, bg=C_SIDE)
         bt.pack(side="left")
-        tk.Label(bt, text=APP_TITLE, bg=C_SIDE, fg="white", font=(FONT, 12, "bold")).pack(anchor="w")
+        tk.Label(bt, text=APP_TITLE.upper(), bg=C_SIDE, fg=C_TEXT, font=(FONT, 11, "bold")).pack(anchor="w")
         tk.Label(bt, text=APP_VERSION, bg=C_SIDE,
                  fg=C_SIDE_MUTED, font=(FONT, 8)).pack(anchor="w")
         self.side_toggle = tk.Label(top, text="«", bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 15, "bold"),
@@ -1563,7 +1594,7 @@ class App(tk.Tk):
             ic.pack(side="left", padx=(10, 8), pady=10)
             lb = tk.Label(row, text=text, bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 11, "bold"))
             lb.pack(side="left")
-            badge = tk.Label(row, text="", bg=C_ACCENT, fg="white", font=(FONT, 9, "bold"), padx=7)
+            badge = tk.Label(row, text="", bg=C_ACCENT, fg=C_ON_ACCENT, font=(MONO, 9, "bold"), padx=7)
             self.nav[key] = {"row": row, "bar": bar, "icon": ic, "label": lb, "badge": badge, "frame": frame}
             for w in (row, ic, lb, badge):
                 w.bind("<Button-1>", lambda e, k=key: self.select_page(k))
@@ -1590,7 +1621,7 @@ class App(tk.Tk):
         r.pack(fill="x", pady=(6, 2))
         tk.Checkbutton(r, text="Tự quét mỗi", variable=self.auto_var, command=self._auto_changed,
                        bg=C_SIDE_CARD, fg=C_SIDE_TEXT, selectcolor=C_SIDE_HOVER, activebackground=C_SIDE_CARD,
-                       activeforeground="white", font=(FONT, 10), bd=0, highlightthickness=0).pack(side="left")
+                       activeforeground=C_TEXT, font=(FONT, 10), bd=0, highlightthickness=0).pack(side="left")
         cb = ttk.Combobox(r, textvariable=self.interval_var, values=INTERVAL_CHOICES, width=4, state="readonly")
         cb.pack(side="left", padx=6)
         cb.bind("<<ComboboxSelected>>", lambda e: self._auto_changed())
@@ -1602,11 +1633,15 @@ class App(tk.Tk):
         self.side_last.pack(fill="x", pady=(2, 0))
 
         ck = card(bottom, "KẾT NỐI", pady=(0, 10))
+        self.side_rd = tk.Label(ck, text="▣ RaiDrive: đang kiểm tra...", bg=C_SIDE_CARD, fg=C_SIDE_MUTED,
+                                font=(FONT, 10), anchor="w", justify="left", wraplength=W, cursor="hand2")
+        self.side_rd.pack(fill="x", pady=(4, 0))
+        self.side_rd.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("raidrive")))
         self.side_pk = tk.Label(ck, text="☁ PikPak: đang kiểm tra...", bg=C_SIDE_CARD, fg=C_SIDE_MUTED,
                                 font=(FONT, 10), anchor="w", justify="left", wraplength=W, cursor="hand2")
-        self.side_pk.pack(fill="x", pady=(4, 0))
+        self.side_pk.pack(fill="x")
         self.side_pk.bind("<Button-1>", lambda e: self.get_rclone() if not find_rclone() else (
-            self.select_page("settings"), self._settings_page("store")))
+            self.select_page("settings"), self._settings_page("pikpak")))
         self.side_bk = tk.Label(ck, text="", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9), anchor="w",
                                 justify="left", wraplength=W)
         self.side_bk.pack(fill="x")
@@ -1619,12 +1654,12 @@ class App(tk.Tk):
         self.side_foot = tk.Label(bottom, text="Kéo mép phải thanh này để đổi độ rộng  ·  Ctrl+B / bấm « để thu gọn",
                                   bg=C_SIDE, fg="#4b5561", font=(FONT, 8), anchor="w", justify="left", wraplength=W)
         self.side_foot.pack(fill="x", padx=2)
-        self._side_wraps = [self.side_owned, self.side_last, self.side_pk, self.side_bk, self.side_foot, self.side_health]
+        self._side_wraps = [self.side_rd, self.side_owned, self.side_last, self.side_pk, self.side_bk, self.side_foot, self.side_health]
         # vạch kéo đổi độ rộng thanh bên
-        grip = tk.Frame(parent, bg="#0a0d10", width=5, cursor="sb_h_double_arrow")
+        grip = tk.Frame(parent, bg=C_BORDER, width=5, cursor="sb_h_double_arrow")
         grip.pack(side="left", fill="y")
         grip.bind("<Enter>", lambda e: grip.config(bg=C_ACCENT))
-        grip.bind("<Leave>", lambda e: grip.config(bg="#0a0d10"))
+        grip.bind("<Leave>", lambda e: grip.config(bg=C_BORDER))
         grip.bind("<B1-Motion>", self._side_drag)
         grip.bind("<ButtonRelease-1>", self._side_drag_end)
         grip.bind("<Double-Button-1>", lambda e: self.toggle_sidebar())
@@ -1840,9 +1875,24 @@ class App(tk.Tk):
                             justify="left", wraplength=width, cursor="hand2")
             link.pack(fill="x", pady=(4, 0))
             self._link_label(link, real, C_MUTED)
+            dests = []
+            if f.get("local_dir"):
+                dests.append(("HDD", from_portable(f["local_dir"]) + ("\\<Tên phim>" if f.get("sub_movie", True) else "")))
+            if f.get("pikpak_dir"):
+                dests.append(("PIKPAK", f["pikpak_dir"] + ("/<Tên phim>" if f.get("sub_movie", True) else "")))
+            dbox = tk.Frame(card, bg=C_PANEL, padx=8, pady=4)
+            dbox.pack(fill="x", pady=(6, 0))
+            for k_, v_ in dests or [("⚠", "Chưa có đích đến - bấm Sửa")]:
+                ln_ = tk.Frame(dbox, bg=C_PANEL)
+                ln_.pack(fill="x")
+                tk.Label(ln_, text=f"{k_:<7}›", bg=C_PANEL, fg=C_ACCENT, font=(MONO, 9, "bold")).pack(side="left")
+                dl_ = tk.Label(ln_, text=" " + v_, bg=C_PANEL, fg=C_TEXT if dests else C_RED, font=(MONO, 9),
+                               anchor="w", justify="left", wraplength=width - 110)
+                dl_.pack(side="left", fill="x")
+                self._wrap_labels.append(dl_)
             self._wrap_labels.append(link)
             if f.get("note"):
-                nt = tk.Label(card, text="✎  " + one_line(f["note"]), bg=C_CARD, fg="#3d4752", font=(FONT, 9),
+                nt = tk.Label(card, text="✎  " + one_line(f["note"]), bg=C_CARD, fg=C_MUTED, font=(FONT, 9),
                               anchor="w", justify="left", wraplength=width)
                 nt.pack(fill="x", pady=(2, 0))
                 self._wrap_labels.append(nt)
@@ -1876,15 +1926,15 @@ class App(tk.Tk):
             self._wrap_labels.append(stl)
             gaps = f.get("gaps") or []
             if gaps and f.get("enabled", True) and "|".join(gaps) != f.get("gap_ack"):
-                gb = tk.Frame(card, bg="#fff7ed", padx=8, pady=5)
+                gb = tk.Frame(card, bg=C_WARN_BG, padx=8, pady=5)
                 gb.pack(fill="x", pady=(6, 0))
                 gl = tk.Label(gb, text="⚠  Có thể thiếu tập:\n" + "\n".join("   • " + x for x in gaps[:6])
                               + (f"\n   ... và {len(gaps) - 6} chỗ khác" if len(gaps) > 6 else ""),
-                              bg="#fff7ed", fg=C_ORANGE, font=(FONT, 9, "bold"), anchor="w", justify="left",
+                              bg=C_WARN_BG, fg=C_ORANGE, font=(FONT, 9, "bold"), anchor="w", justify="left",
                               wraplength=width - 20)
                 gl.pack(fill="x")
                 self._wrap_labels.append(gl)
-                ack = tk.Label(gb, text="✓ Đã kiểm tra, bỏ qua cảnh báo này", bg="#fff7ed", fg=C_MUTED,
+                ack = tk.Label(gb, text="✓ Đã kiểm tra, bỏ qua cảnh báo này", bg=C_WARN_BG, fg=C_MUTED,
                                font=(FONT, 8, "underline"), anchor="w", cursor="hand2")
                 ack.pack(fill="x", pady=(3, 0))
                 ack.bind("<Button-1>", lambda e, i=i: self._ack_gaps(i))
@@ -1905,6 +1955,8 @@ class App(tk.Tk):
             r3.pack(fill="x", pady=(8, 0))
             ttk.Button(r3, text="⌕  Quét file", style="AccentSmall.TButton",
                        command=lambda i=i: self.scan_folder_files(i)).pack(side="left")
+            ttk.Button(r3, text="⬇  Tải mới", style="Small.TButton",
+                       command=lambda f=f: self.start_scan(True, only={fid(f)})).pack(side="left", padx=(6, 0))
             ttk.Button(r3, text="✎  Sửa", style="Small.TButton",
                        command=lambda i=i: self.open_folder_dialog(i)).pack(side="left", padx=(6, 0))
             more = ttk.Menubutton(r3, text="⋯", style="Small.TButton", width=3)
@@ -2029,7 +2081,7 @@ class App(tk.Tk):
                                  if self.fp else True))
         self.fp_empty = tk.Label(self.fp_tree, text="Bấm \"⌕ Quét file\" ở một thư mục bên trái\n"
                                                     "để xem tất cả file của thư mục đó.",
-                                 bg="white", fg=C_MUTED, font=(FONT, 11), justify="center")
+                                 bg=C_CARD, fg=C_MUTED, font=(FONT, 11), justify="center")
         self.fp_empty.place(relx=0.5, rely=0.4, anchor="center")
 
         bot = ttk.Frame(p, style="Card.TFrame")
@@ -2435,7 +2487,7 @@ class App(tk.Tk):
                                       "bấm tiêu đề cột để sắp xếp)", style="Muted.TLabel").pack(anchor="w", pady=(10, 4))
         lb = tk.Frame(self.tab_scan, bg=C_BORDER, padx=1, pady=1)
         lb.pack(fill="x")
-        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg="#101418", fg="#cbd5e1",
+        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg="#07090c", fg="#9fe0b0",
                                insertbackground="white", relief="flat", padx=10, pady=8)
         self.log_box.pack(fill="both")
 
@@ -2513,7 +2565,7 @@ class App(tk.Tk):
         self._apply_scan_filter()
         self.update_stats()
 
-    def start_scan(self, download, auto=False):
+    def start_scan(self, download, auto=False, only=None):
         if self.worker and self.worker.is_alive():
             return False
         warn = (lambda m: self.log("[Tự quét] " + m)) if auto else (lambda m: messagebox.showwarning(APP_NAME, m))
@@ -2534,7 +2586,9 @@ class App(tk.Tk):
         self._new_count = 0
         self.rows_ver += 1
         self.progress.config(value=0, maximum=max(1, sum(1 for f in self.cfg["folders"] if f.get("enabled", True))))
-        self._run_worker(self._scan_job, download, auto)
+        if only:
+            self.select_page("scan")
+        self._run_worker(self._scan_job, download, auto, only)
         return True
 
     def _run_worker(self, target, *args):
@@ -2651,24 +2705,27 @@ class App(tk.Tk):
         if not r:
             probs.append("Chưa có rclone.exe trong thư mục tool - tải sẽ chậm (copy từ ổ RaiDrive), "
                          "không lưu được vào My PikPak.")
-        elif (cfg.get("pikpak_on") or uses_share) and getattr(self, "pk_ok", None) is False:
+        elif (any(f.get("pikpak_dir") for f in cfg["folders"] if f.get("enabled", True)) or uses_share) \
+                and getattr(self, "pk_ok", None) is False:
             probs.append("Chưa kết nối được PikPak (rclone) - kiểm tra tài khoản PikPak trong Cài đặt.")
         if uses_share and not (cfg.get("pikpak_user") and cfg.get("pikpak_pass")):
             probs.append("Có link chia sẻ PikPak nhưng chưa lưu tài khoản PikPak (Cài đặt → Tài khoản PikPak).")
-        dl = from_portable(cfg.get("download_dir", "")) or default_download_dir()
-        try:
-            os.makedirs(dl, exist_ok=True)
-        except OSError as e:
-            probs.append(f"Không tạo được thư mục tải về {dl}: {e}")
-        lib = cfg.get("library_root", "")
-        chk = [(dl, need)]
-        if cfg.get("organize") and lib:
-            lib = from_portable(lib)
-            if not os.path.isdir(lib):
-                probs.append(f"Không thấy thư mục phim trên HDD: {lib} (ổ HDD chưa cắm?) - vẫn tải về máy, "
-                             "chưa copy sang HDD được.")
-            else:
-                chk.append((lib, need))
+        codes = {it[4] for it in items} if items else {fid(f) for f in cfg["folders"] if f.get("enabled", True)}
+        chk = []
+        for f in cfg["folders"]:
+            if fid(f) not in codes or not f.get("local_dir"):
+                continue
+            d = from_portable(f["local_dir"])
+            n = sum(int(it[3] or 0) for it in items if it[4] == fid(f))
+            drv = os.path.splitdrive(os.path.abspath(d))[0]
+            if drv and not os.path.exists(drv + os.sep):
+                probs.append(f"Không thấy ổ {drv} (đích HDD của \"{f.get('name') or d}\") - ổ chưa cắm?")
+                continue
+            try:
+                os.makedirs(d, exist_ok=True)
+                chk.append((d, n))
+            except OSError as e:
+                probs.append(f"Không tạo được thư mục đích {d}: {e}")
         seen_drive = {}
         for d, n in chk:
             if not os.path.isdir(d):
@@ -2712,7 +2769,7 @@ class App(tk.Tk):
         except (AttributeError, tk.TclError):
             pass
 
-    def _scan_job(self, download, auto=False):
+    def _scan_job(self, download, auto=False, only=None):
         cfg = json.loads(json.dumps(self.cfg))
         exts = {e.lower() if e.startswith(".") else "." + e.lower()
                 for e in cfg.get("extensions", "").split() if e.strip()}
@@ -2720,7 +2777,8 @@ class App(tk.Tk):
         idx = self.owned_index()
         new_items, seen = [], set()
         stats = {"owned": 0, "dl": 0, "retry": 0, "err": 0, "unrev": 0, "failed": []}
-        targets = [(i, f) for i, f in enumerate(cfg["folders"]) if f.get("enabled", True)]
+        targets = [(i, f) for i, f in enumerate(cfg["folders"])
+                   if ((fid(f) in only) if only else f.get("enabled", True))]
         now_ts = time.time()
         self.log(f"=== {dt.datetime.now():%d/%m/%Y %H:%M} | Quét {len(targets)}/{len(cfg['folders'])} thư mục ===")
         try:
@@ -2914,17 +2972,17 @@ class App(tk.Tk):
         self.log(f"⚠ [{name}] {status}: {msg}")
 
     def _fetch_one(self, cfg, item):
+        """1 file: [lưu vào My PikPak (sao chép trên máy chủ)] + [tải / copy về thư mục HDD] -> Danh sách đã có."""
         fcode, fname, name, size, folder_code = item
         meta = dict(self.item_meta.get(fcode) or (self.history.get(fcode) or {}).get("src") or {})
         if not meta:
             raise SourceError("Không còn thông tin nguồn của file - quét lại thư mục.")
         fcfg = next((f for f in cfg["folders"] if fid(f) == folder_code), None) or {}
         movie = fname or movie_of(fcfg, meta.get("sub", ""), name)
-        dl_dir = from_portable(cfg.get("download_dir", "")) or default_download_dir()
-        if cfg.get("dl_movie_sub"):
-            dl_dir = os.path.join(dl_dir, safe_name(movie))
-        os.makedirs(dl_dir, exist_ok=True)
-        dst = os.path.join(dl_dir, safe_name(name))
+        hdd_dir = local_dir_for(cfg, fcfg, movie)
+        pk_dir = pikpak_folder(cfg, fcfg, movie)
+        if not hdd_dir and not pk_dir:
+            raise SourceError("Thư mục phim chưa có đích đến (HDD / My PikPak) - bấm Sửa để đặt.")
         try:
             size = int(size or 0)
         except (TypeError, ValueError):
@@ -2932,26 +2990,26 @@ class App(tk.Tk):
         now = dt.datetime.now()
         rec = dict(self.history.get(fcode) or {})
         rec.update({"folder": movie, "movie": movie, "source": fcfg.get("name", ""), "folder_code": folder_code,
-                    "name": name, "size": size,
-                    "ts": now.timestamp(), "sent_at": now.strftime("%d/%m/%Y %H:%M"), "status": STATUS_DL,
-                    "src": meta})
+                    "name": name, "size": size, "ts": now.timestamp(), "sent_at": now.strftime("%d/%m/%Y %H:%M"),
+                    "status": STATUS_DL, "src": meta, "error": ""})
         self.q.put(("hist", fcode, dict(rec)))
-        self.q.put(("rowstatus", fcode, "⬇  Đang tải...", "dl"))
         last = [0.0, -1]
 
         def prog(pct, speed=""):
             if pct != last[1] and time.time() - last[0] > 0.7:
                 last[0], last[1] = time.time(), pct
-                self.q.put(("rowstatus", fcode, f"⬇  {pct}%   {speed}", "dl"))
+                self.q.put(("rowstatus", fcode, f"⬇  {pct:>3}%   {speed}", "dl"))
                 self.q.put(("status", f"Đang tải {name}: {pct}%  {speed}"))
 
         rclone = find_rclone()
         remote = cfg.get("pikpak_remote", "pikpak") or "pikpak"
-        src_remote, saved = None, None
-        if meta.get("share"):                      # link chia sẻ: lưu về My PikPak trước, rồi tải từ đó
+        extra = ["--bwlimit", cfg["bwlimit"]] if str(cfg.get("bwlimit", "")).strip() else []
+        src_remote, saved = None, ""
+        # ----- 1. lưu vào My PikPak
+        if meta.get("share"):                      # link chia sẻ: lưu (restore) thẳng vào đích My PikPak
             if not rclone:
                 raise SourceError("Cần rclone.exe để tải từ link chia sẻ PikPak.")
-            folder_path = pikpak_folder(cfg, fcfg, movie)
+            folder_path = pk_dir or pikpak_join(cfg.get("pikpak_root", "") or "My Pack", safe_name(movie))
             target = f"{remote}:{pikpak_join(folder_path, name)}"
             self.q.put(("rowstatus", fcode, "☁  Đang lưu vào My PikPak...", "dl"))
             code_, out, _e = run_rclone(rclone, ["lsf", target], 60)
@@ -2968,67 +3026,83 @@ class App(tk.Tk):
                         found = True
                         break
                     code_, out, _e = run_rclone(rclone, ["lsf", f"{remote}:My Pack/{name}"], 60)
-                    if code_ == 0 and out.strip():     # PikPak lưu vào My Pack -> chuyển sang thư mục phim
+                    if code_ == 0 and out.strip():     # PikPak lưu vào My Pack -> chuyển sang đích
                         run_rclone(rclone, ["moveto", f"{remote}:My Pack/{name}", target], 300)
                         found = True
                         break
                 if not found:
                     raise SourceError("Đã gửi lệnh lưu nhưng chưa thấy file trong My PikPak (PikPak xử lý chậm?) - "
                                       "lần sau thử lại.")
-            src_remote = saved = target
-        elif cfg.get("dl_method", "auto") != "copy" and rclone:
-            src_remote = remote_of(cfg, meta.get("path"))
-        if os.path.isfile(dst) and size and os.path.getsize(dst) == size:
-            ok, msg = True, ""                     # đã tải trước đó
-        elif src_remote:
-            ok, msg = rclone_copy(rclone, src_remote, dst, prog, self.stop_flag)
-            if not ok and not self.stop_flag.is_set() and meta.get("path") and os.path.isfile(meta["path"]):
-                self.log(f"[{name}] rclone lỗi ({msg[:120]}) - chuyển sang copy từ ổ RaiDrive.")
-                ok, msg = copy_with_progress(meta["path"], dst, prog, self.stop_flag)
-        elif meta.get("path"):
-            if not os.path.isfile(meta["path"]):
-                raise SourceError(f"Không thấy file trên ổ: {meta['path']} (ổ RaiDrive chưa kết nối?)")
-            ok, msg = copy_with_progress(meta["path"], dst, prog, self.stop_flag)
+            src_remote = target
+            saved = target if pk_dir else ""
         else:
-            raise SourceError("Không có cách tải file này.")
-        if self.stop_flag.is_set() and not ok:
-            rec["status"] = STATUS_FAIL
-            self.q.put(("hist", fcode, dict(rec)))
-            self.q.put(("rowstatus", fcode, "■  Đã dừng", "skip"))
-            return False
-        if not ok:
-            self._fetch_fail(item, STATUS_FAIL, msg or "lỗi không rõ")
-            return False
-        got = os.path.getsize(dst) if os.path.isfile(dst) else 0
-        if size and got < size * 0.995:            # tải thiếu -> đổi tên, tải lại lần sau
-            try:
-                os.replace(dst, dst + ".hong")
-            except OSError:
-                pass
-            self.q.put(("owned_remove", fcode, folder_code, name))
-            self._fetch_fail(item, STATUS_BAD, f"{human_size(got)} / {human_size(size)} - đã đổi tên *.hong")
-            return False
-        # copy sang HDD
-        hdd = ""
-        if cfg.get("organize"):
-            dest = local_dir_for(cfg, fcfg, movie)
-            if dest:
+            if rclone and cfg.get("dl_method", "auto") != "copy":
+                src_remote = remote_of(cfg, meta.get("path"))
+            if pk_dir:
+                src_pk = remote_of(cfg, meta.get("path")) if rclone else None
+                if src_pk:
+                    target = f"{remote}:{pikpak_join(pk_dir, name)}"
+                    self.q.put(("rowstatus", fcode, "☁  Đang lưu vào My PikPak...", "dl"))
+                    ok_pk, msg_pk = rclone_copy(rclone, src_pk, target, None, self.stop_flag)
+                    if ok_pk:
+                        saved = target
+                    elif not self.stop_flag.is_set():
+                        self.log(f"⚠ [{name}] Lưu My PikPak lỗi: {msg_pk[:160]} - sẽ thử lại bằng hàng chờ.")
+        # ----- 2. tải / copy về HDD
+        dst = ""
+        if hdd_dir:
+            os.makedirs(hdd_dir, exist_ok=True)
+            dst = os.path.join(hdd_dir, safe_name(name))
+            self.q.put(("rowstatus", fcode, "⬇  Đang tải về HDD...", "dl"))
+            if os.path.isfile(dst) and size and os.path.getsize(dst) == size:
+                ok, msg = True, ""                 # đã có sẵn
+            elif src_remote:
+                ok, msg = rclone_copy(rclone, src_remote, dst, prog, self.stop_flag, extra)
+                if not ok and not self.stop_flag.is_set() and meta.get("path") and os.path.isfile(meta["path"]):
+                    self.log(f"[{name}] rclone lỗi ({msg[:120]}) - chuyển sang copy từ ổ RaiDrive.")
+                    ok, msg = copy_with_progress(meta["path"], dst, prog, self.stop_flag)
+            elif meta.get("path"):
+                if not os.path.isfile(meta["path"]):
+                    raise SourceError(f"Không thấy file trên ổ: {meta['path']} (ổ RaiDrive chưa kết nối?)")
+                ok, msg = copy_with_progress(meta["path"], dst, prog, self.stop_flag)
+            else:
+                raise SourceError("Không có cách tải file này.")
+            if self.stop_flag.is_set() and not ok:
+                rec["status"] = STATUS_FAIL
+                self.q.put(("hist", fcode, dict(rec)))
+                self.q.put(("rowstatus", fcode, "■  Đã dừng", "skip"))
+                return False
+            if not ok:
+                self._fetch_fail(item, STATUS_FAIL, msg or "lỗi không rõ")
+                return False
+            got = os.path.getsize(dst) if os.path.isfile(dst) else 0
+            if size and got < size * 0.995:        # tải thiếu -> đổi tên, tải lại lần sau
                 try:
-                    self.q.put(("rowstatus", fcode, "⇢  Đang copy sang HDD...", "dl"))
-                    hdd = copy_to_library(dst, dest)
-                    self.log(f"→ Đã copy sang HDD: {hdd}")
-                except Exception as e:
-                    self.log(f"⚠ [{name}] Không copy được sang HDD: {e}")
-        rec.update(status=STATUS_DONE, done_ts=time.time(), path=dst, hdd=hdd, tries=0, error="")
+                    os.replace(dst, dst + ".hong")
+                except OSError:
+                    pass
+                self.q.put(("owned_remove", fcode, folder_code, name))
+                self._fetch_fail(item, STATUS_BAD, f"{human_size(got)} / {human_size(size)} - đã đổi tên *.hong")
+                return False
+            self.log(f"→ Đã tải về HDD: {dst}")
+        elif pk_dir and not saved:
+            self._fetch_fail(item, STATUS_FAIL, "Không lưu được vào My PikPak")
+            return False
+        rec.update(status=STATUS_DONE, done_ts=time.time(), path=dst, hdd=dst, tries=0, error="")
         if saved:
             rec.update(upload="done", upload_msg=saved, upload_ts=time.time())
-        elif src_remote:
-            rec["remote_src"] = src_remote
+        elif pk_dir:
+            rec.update(upload="", remote_src=src_remote or "")
+        else:
+            rec["upload"] = "skip"
         self.q.put(("hist", fcode, dict(rec)))
         self.q.put(("owned_add", fcode, folder_code, movie, name, size, "tool"))
-        self.q.put(("fetched", fcode))
-        self.q.put(("rowstatus", fcode, "✔  Xong" + (" · HDD" if hdd else "") + (" · My PikPak" if saved else ""), "done"))
-        self.log(f"✔ Tải xong: {name}")
+        if pk_dir and not saved:
+            self.q.put(("fetched", fcode))         # lưu My PikPak bằng hàng chờ (upload / thử lại)
+        self.q.put(("rowstatus", fcode, "✔  Xong" + (" · HDD" if dst else "") + (" · My PikPak" if saved else
+                                                                                 (" · chờ lưu PikPak" if pk_dir else "")),
+                    "done"))
+        self.log(f"✔ Xong: {name}")
         return True
 
     def history_mark_done(self):
@@ -3345,14 +3419,14 @@ class App(tk.Tk):
         def box(checked):
             n = 18
             img = tk.PhotoImage(width=n, height=n)
-            border = C_ACCENT if checked else "#9ca3af"
-            fill = C_ACCENT if checked else "#ffffff"
+            border = C_ACCENT if checked else "#56616e"
+            fill = C_ACCENT if checked else C_FIELD
             for y in range(n):
                 row = []
                 for x in range(n):
                     corner = (x in (0, n - 1)) and (y in (0, n - 1))
                     if corner:
-                        row.append("#ffffff")
+                        row.append(C_CARD)
                     elif x in (0, n - 1) or y in (0, n - 1):
                         row.append(border)
                     else:
@@ -3362,15 +3436,15 @@ class App(tk.Tk):
                 pts = [(4, 9), (5, 10), (6, 11), (7, 12), (8, 11), (9, 10), (10, 9), (11, 8), (12, 7), (13, 6)]
                 for x, y in pts:
                     for dx, dy in ((0, 0), (0, -1), (1, 0)):
-                        img.put("#ffffff", to=(x + dx, y + dy))
+                        img.put(C_ON_ACCENT, to=(x + dx, y + dy))
             return img
         self.img_on, self.img_off = box(True), box(False)
 
     PAGE_INFO = {
-        "folders": ("Thư mục phim", "Thư mục nguồn trên ổ RaiDrive / link chia sẻ PikPak - quét file và đánh dấu tập đã có"),
-        "scan": ("Quét & Tải", "Tìm tập mới chưa có trong Danh sách đã có → tải về máy → HDD → My PikPak"),
+        "folders": ("Thư mục phim", "Nguồn (link chia sẻ PikPak / ổ RaiDrive) → đích HDD + My PikPak · quét file, đánh dấu tập đã có"),
+        "scan": ("Quét & Tải", "Tìm tập mới chưa có trong Danh sách đã có → save My PikPak → copy về HDD"),
         "history": ("Lịch sử tải", "Theo dõi tải xong · copy vào thư mục phim · upload PikPak"),
-        "settings": ("Cài đặt", "Nguồn & Tải về · Lưu trữ & PikPak · Tự động · Máy này & Sao lưu"),
+        "settings": ("Cài đặt", "Chung · My PikPak · RaiDrive · Máy này & Sao lưu"),
     }
 
     def _build_header(self, parent):
@@ -3393,7 +3467,7 @@ class App(tk.Tk):
                                 padx=12, pady=6, cursor="hand2", highlightbackground=C_BORDER, highlightthickness=1)
         self.top_upd.pack(side="right", padx=(0, 10))
         self.top_upd.bind("<Button-1>", lambda e: self.check_update(silent=False))
-        self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("auto")))
+        self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("gen")))
         self.header_auto_text = ""
 
     def select_page(self, key):
@@ -3412,7 +3486,7 @@ class App(tk.Tk):
                 n[w].config(bg=bg)
             n["bar"].config(bg=C_ACCENT if on else bg)
             n["icon"].config(fg=C_SIDE_ACTIVE if on else C_SIDE_MUTED)
-            n["label"].config(fg="white" if on else C_SIDE_TEXT)
+            n["label"].config(fg=C_ACCENT if on else C_SIDE_TEXT)
 
     def _nav_hover(self, key, inside):
         if getattr(self, "page", None) == key:
@@ -3441,17 +3515,19 @@ class App(tk.Tk):
         ttk.Label(bar, textvariable=self.status_var, style="Status.TLabel").pack(side="left")
 
     def _stat_card(self, parent, title, color, glyph=""):
-        card = tk.Frame(parent, bg=C_CARD, highlightbackground=C_BORDER, highlightthickness=1)
-        tk.Frame(card, bg=color, height=3).pack(side="top", fill="x")
-        body = tk.Frame(card, bg=C_CARD, padx=16, pady=10)
-        body.pack(fill="both", expand=True)
+        """Thẻ số liệu kiểu đồng hồ máy: nhãn nhỏ in hoa, số lớn font màn hình, vạch màu + đèn báo."""
+        card = tk.Frame(parent, bg=C_PANEL, highlightbackground=C_BORDER, highlightthickness=1)
+        tk.Frame(card, bg=color, width=3).pack(side="left", fill="y")
+        body = tk.Frame(card, bg=C_PANEL, padx=14, pady=10)
+        body.pack(side="left", fill="both", expand=True)
         var = tk.StringVar(value="0")
-        txt = tk.Frame(body, bg=C_CARD)
-        txt.pack(side="left", fill="both", expand=True)
-        tk.Label(txt, text=title.upper(), bg=C_CARD, fg=C_MUTED, font=(FONT, 8, "bold")).pack(anchor="w")
-        tk.Label(txt, textvariable=var, bg=C_CARD, fg=C_TEXT, font=(FONT, 20, "bold")).pack(anchor="w")
+        top = tk.Frame(body, bg=C_PANEL)
+        top.pack(fill="x")
+        tk.Label(top, text="●", bg=C_PANEL, fg=color, font=(FONT, 8)).pack(side="left")
+        tk.Label(top, text="  " + title.upper(), bg=C_PANEL, fg=C_MUTED, font=(FONT, 8, "bold")).pack(side="left")
         if glyph:
-            tk.Label(body, text=glyph, bg=C_CARD, fg=color, font=(FONT, 20)).pack(side="right", padx=(6, 0))
+            tk.Label(top, text=glyph, bg=C_PANEL, fg="#3a4450", font=(FONT, 12)).pack(side="right")
+        tk.Label(body, textvariable=var, bg=C_PANEL, fg=C_TEXT, font=(MONO, 22, "bold")).pack(anchor="w", pady=(2, 0))
         return card, var
 
     def _apply_scan_filter(self):
@@ -3529,10 +3605,10 @@ class App(tk.Tk):
         return "break"
 
     def open_folder_dialog(self, index=None):
-        """Hộp thoại thêm / sửa 1 thư mục phim (thư mục trên ổ RaiDrive hoặc link chia sẻ PikPak)."""
+        """Thêm / sửa 1 thư mục phim: Nguồn · Tên phim · Ghi chú · Đích HDD · Đích My PikPak (+ nâng cao)."""
         old = dict(self.cfg["folders"][index]) if index is not None else {}
         win = tk.Toplevel(self)
-        win.title("Sửa thư mục" if old else "Thêm thư mục phim")
+        win.title("Sửa thư mục phim" if old else "Thêm thư mục phim")
         win.configure(bg=C_CARD)
         win.transient(self)
         win.resizable(True, False)
@@ -3540,61 +3616,146 @@ class App(tk.Tk):
             win.iconphoto(False, self.icon_big)
         except (tk.TclError, TypeError):
             pass
-        body = ttk.Frame(win, style="Card.TFrame", padding=18)
+        body = ttk.Frame(win, style="Card.TFrame", padding=20)
         body.pack(fill="both", expand=True)
         body.columnconfigure(1, weight=1)
-        ttk.Label(body, text="Sửa thư mục" if old else "Thêm thư mục phim", style="Section.TLabel").grid(
-            row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
-        v = {k: tk.StringVar(value=old.get(k, "")) for k in ("name", "url", "include", "exclude", "local_dir",
-                                                              "pikpak_dir")}
-        v["local_dir"].set(from_portable(old.get("local_dir", "")))
+        hd = tk.Frame(body, bg=C_CARD)
+        hd.grid(row=0, column=0, columnspan=3, sticky="we", pady=(0, 12))
+        tk.Frame(hd, bg=C_ACCENT, width=4, height=22).pack(side="left", padx=(0, 10))
+        tk.Label(hd, text=("SỬA THƯ MỤC PHIM" if old else "THÊM THƯ MỤC PHIM"), bg=C_CARD, fg=C_TEXT,
+                 font=(FONT, 12, "bold")).pack(side="left")
+        defaults = {"local_dir": from_portable(self.cfg.get("library_root", "") or r"D:\DOWNLOAD HH3D"),
+                    "pikpak_dir": self.cfg.get("pikpak_root", "") or "My Pack/2026"}
+        v = {k: tk.StringVar(value=old.get(k, defaults.get(k, "")) if old else defaults.get(k, ""))
+             for k in ("name", "url", "include", "exclude", "local_dir", "pikpak_dir")}
+        v["local_dir"].set(from_portable(old.get("local_dir", "")) if old else defaults["local_dir"])
         v["url"].set(resolve_src(self.cfg, old.get("url", "")) or old.get("url", ""))
         en = tk.BooleanVar(value=old.get("enabled", True))
+        use_hdd = tk.BooleanVar(value=bool(v["local_dir"].get()))
+        use_pk = tk.BooleanVar(value=bool(v["pikpak_dir"].get()))
+        sub_movie = tk.BooleanVar(value=old.get("sub_movie", True))
         r = 1
 
-        def field(label, key, hint=None, browse=False, title="Chọn thư mục chứa phim này"):
+        def label(text, row, sub=None):
+            box = tk.Frame(body, bg=C_CARD)
+            box.grid(row=row, column=0, sticky="nw", pady=6, padx=(0, 14))
+            tk.Label(box, text=text, bg=C_CARD, fg=C_TEXT, font=(FONT, 10, "bold"), anchor="w").pack(anchor="w")
+            if sub:
+                tk.Label(box, text=sub, bg=C_CARD, fg=C_MUTED, font=(FONT, 8), anchor="w").pack(anchor="w")
+
+        def field(text, key, sub=None, buttons=()):
             nonlocal r
-            ttk.Label(body, text=label).grid(row=r, column=0, sticky="w", pady=5, padx=(0, 12))
-            e = ttk.Entry(body, textvariable=v[key], width=60)
-            e.grid(row=r, column=1, sticky="we", pady=5)
-            if browse:
-                ttk.Button(body, text="Chọn...", command=lambda: (
-                    lambda p: p and v[key].set(os.path.normpath(p)))(
-                    filedialog.askdirectory(parent=win, title=title,
-                                            initialdir=rd_root(self.cfg) or None))).grid(row=r, column=2, padx=(8, 0))
+            label(text, r, sub)
+            e = ttk.Entry(body, textvariable=v[key], width=62)
+            e.grid(row=r, column=1, sticky="we", pady=6)
+            if buttons:
+                bf = tk.Frame(body, bg=C_CARD)
+                bf.grid(row=r, column=2, padx=(8, 0), sticky="w")
+                for t, cmd in buttons:
+                    ttk.Button(bf, text=t, style="Small.TButton", command=cmd).pack(side="left", padx=(0, 4))
             r += 1
-            if hint:
-                ttk.Label(body, text=hint, style="Muted.TLabel").grid(row=r, column=1, columnspan=2, sticky="w")
-                r += 1
             return e
 
-        first = field("Nguồn phim *", "url", "Thư mục trên ổ RaiDrive (VD P:\\Shared\\Doraemon) - bấm Chọn...,\n"
-                                            "hoặc link chia sẻ PikPak: https://mypikpak.com/s/XXXX (có mật khẩu: thêm ?pwd=xxxx)",
-                      browse=True, title="Chọn thư mục phim trên ổ RaiDrive")
-        field("Tên phim", "name", "Để trống = tự lấy tên thư mục")
-        ttk.Label(body, text="Ghi chú").grid(row=r, column=0, sticky="nw", pady=5, padx=(0, 12))
+        def pick_dir(key, title, initial=None):
+            p = filedialog.askdirectory(parent=win, title=title, initialdir=initial or None)
+            if p:
+                v[key].set(os.path.normpath(p))
+                if key == "url" and not v["name"].get().strip():
+                    v["name"].set(os.path.basename(os.path.normpath(p)))
+
+        def pick_pk():
+            self.open_pikpak_browser(target_var=v["pikpak_dir"], parent=win)
+
+        first = field("Nguồn phim *", "url", "Link chia sẻ PikPak / thư mục trên ổ RaiDrive",
+                      (("▣ Chọn trên RaiDrive...", lambda: pick_dir("url", "Chọn thư mục phim trên ổ RaiDrive",
+                                                                    rd_root(self.cfg))),))
+        tk.Label(body, text="VD: https://mypikpak.com/s/XXXX   (có mật khẩu: thêm ?pwd=xxxx)   hoặc   Z:\\Update HH3D",
+                 bg=C_CARD, fg=C_MUTED, font=(FONT, 8)).grid(row=r, column=1, columnspan=2, sticky="w")
+        r += 1
+        field("Tên phim", "name", "Để trống = tên thư mục")
+        label("Ghi chú", r)
         nf = tk.Frame(body, bg=C_BORDER, padx=1, pady=1)
-        nf.grid(row=r, column=1, columnspan=2, sticky="we", pady=5)
-        note = tk.Text(nf, height=3, wrap="word", relief="flat", font=(FONT, 10), padx=6, pady=4,
+        nf.grid(row=r, column=1, columnspan=2, sticky="we", pady=6)
+        note = tk.Text(nf, height=3, wrap="word", relief="flat", font=(FONT, 10), padx=6, pady=4, bg=C_FIELD,
+                       fg=C_TEXT, insertbackground=C_ACCENT, selectbackground=C_ACCENT, selectforeground=C_ON_ACCENT,
                        undo=True, highlightthickness=0)
         note.pack(fill="x")
         note.insert("1.0", old.get("note", ""))
         r += 1
-        field("Chỉ lấy file có", "include")
-        field("Bỏ qua file có", "exclude", "Nhiều từ cách nhau dấu phẩy, không phân biệt dấu / hoa thường. "
-                                          "VD: lấy \"lồng tiếng\", bỏ \"720p, vietsub\"")
-        field("Thư mục trên HDD", "local_dir", "Để trống = <Thư mục phim HDD ở Cài đặt>\\<Tên phim>", browse=True)
-        field("Thư mục con trên My PikPak", "pikpak_dir", "Để trống = dùng tên phim (trong thư mục lưu My PikPak ở Cài đặt)")
-        ttk.Label(body, text="Tách tên phim").grid(row=r, column=0, sticky="w", pady=5, padx=(0, 12))
+        tk.Frame(body, bg=C_BORDER, height=1).grid(row=r, column=0, columnspan=3, sticky="we", pady=(10, 6))
+        r += 1
+        tk.Label(body, text="ĐÍCH ĐẾN", bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold")).grid(
+            row=r, column=0, columnspan=3, sticky="w")
+        r += 1
+        ttk.Checkbutton(body, text="Copy về HDD", variable=use_hdd).grid(row=r, column=0, sticky="w", pady=6)
+        e_hdd = ttk.Entry(body, textvariable=v["local_dir"], width=62)
+        e_hdd.grid(row=r, column=1, sticky="we", pady=6)
+        ttk.Button(body, text="Chọn...", style="Small.TButton",
+                   command=lambda: pick_dir("local_dir", "Chọn thư mục đích trên HDD")).grid(row=r, column=2,
+                                                                                           padx=(8, 0), sticky="w")
+        r += 1
+        ttk.Checkbutton(body, text="Save vào My PikPak", variable=use_pk).grid(row=r, column=0, sticky="w", pady=6)
+        e_pk = ttk.Entry(body, textvariable=v["pikpak_dir"], width=62)
+        e_pk.grid(row=r, column=1, sticky="we", pady=6)
+        ttk.Button(body, text="Chọn...", style="Small.TButton", command=pick_pk).grid(row=r, column=2,
+                                                                                     padx=(8, 0), sticky="w")
+        r += 1
+        ttk.Checkbutton(body, text="Tạo thư mục con theo tên phim ở đích (VD  ...\\Tiên Nghịch\\  ·  My Pack/2026/Tiên Nghịch/)",
+                        variable=sub_movie).grid(row=r, column=1, columnspan=2, sticky="w", pady=(2, 0))
+        r += 1
+        preview = tk.StringVar()
+        tk.Label(body, textvariable=preview, bg=C_PANEL, fg=C_GREEN, font=(MONO, 9), anchor="w", justify="left",
+                 padx=10, pady=6).grid(row=r, column=1, columnspan=2, sticky="we", pady=(6, 0))
+        r += 1
+
+        def upd(*_):
+            e_hdd.config(state="normal" if use_hdd.get() else "disabled")
+            e_pk.config(state="normal" if use_pk.get() else "disabled")
+            mv = "<Tên phim>"
+            lines = []
+            if use_hdd.get() and v["local_dir"].get().strip():
+                lines.append("HDD      › " + os.path.join(v["local_dir"].get().strip(), mv if sub_movie.get() else "")
+                             .rstrip("\\/") + os.sep)
+            if use_pk.get() and v["pikpak_dir"].get().strip():
+                lines.append("PIKPAK   › " + pikpak_join(v["pikpak_dir"].get(), mv if sub_movie.get() else "") + "/")
+            preview.set("\n".join(lines) or "⚠ Chưa chọn đích đến nào")
+        for var in (use_hdd, use_pk, sub_movie, v["local_dir"], v["pikpak_dir"]):
+            var.trace_add("write", upd)
+        upd()
+
+        # ----- nâng cao (gập)
+        adv_open = tk.BooleanVar(value=bool(old.get("include") or old.get("exclude") or
+                                            old.get("split", "auto") != "auto"))
+        adv_btn = tk.Label(body, text="", bg=C_CARD, fg=C_MUTED, font=(FONT, 9, "bold"), cursor="hand2")
+        adv_btn.grid(row=r, column=0, columnspan=3, sticky="w", pady=(12, 0))
+        r += 1
+        adv = tk.Frame(body, bg=C_CARD)
+        adv.grid(row=r, column=0, columnspan=3, sticky="we")
+        adv.columnconfigure(1, weight=1)
+        r += 1
         split = tk.StringVar(value=SPLIT_CHOICES.get(old.get("split", "auto"), SPLIT_CHOICES["auto"]))
-        ttk.Combobox(body, textvariable=split, values=tuple(SPLIT_CHOICES.values()), state="readonly", width=58).grid(
-            row=r, column=1, sticky="we", pady=5)
-        r += 1
-        ttk.Label(body, text="Nguồn chứa nhiều phim: tên phim dùng để copy vào HDD\\<Tên phim> và My PikPak.",
-                  style="Muted.TLabel").grid(row=r, column=1, columnspan=2, sticky="w")
-        r += 1
-        ttk.Checkbutton(body, text="Quét thư mục này", variable=en).grid(row=r, column=1, sticky="w", pady=(6, 0))
-        r += 1
+        rows = (("Tách tên phim", ttk.Combobox(adv, textvariable=split, values=tuple(SPLIT_CHOICES.values()),
+                                               state="readonly", width=50)),
+                ("Chỉ lấy file có", ttk.Entry(adv, textvariable=v["include"], width=62)),
+                ("Bỏ qua file có", ttk.Entry(adv, textvariable=v["exclude"], width=62)))
+        for i, (t, w) in enumerate(rows):
+            tk.Label(adv, text=t, bg=C_CARD, fg=C_TEXT, font=(FONT, 10)).grid(row=i, column=0, sticky="w",
+                                                                              pady=5, padx=(0, 14))
+            w.grid(row=i, column=1, sticky="we" if isinstance(w, ttk.Entry) else "w", pady=5)
+        tk.Label(adv, text="Từ khóa cách nhau dấu phẩy, không phân biệt dấu / hoa thường.", bg=C_CARD, fg=C_MUTED,
+                 font=(FONT, 8)).grid(row=3, column=1, sticky="w")
+        ttk.Checkbutton(adv, text="Quét thư mục này", variable=en).grid(row=4, column=1, sticky="w", pady=(6, 0))
+
+        def toggle_adv(_e=None, flip=True):
+            if flip:
+                adv_open.set(not adv_open.get())
+            adv_btn.config(text=("▾" if adv_open.get() else "▸") + "  NÂNG CAO  (tách tên phim · lọc từ khóa)")
+            if adv_open.get():
+                adv.grid()
+            else:
+                adv.grid_remove()
+        adv_btn.bind("<Button-1>", toggle_adv)
+        toggle_adv(flip=False)
 
         def save(_e=None):
             src = clean_src(self.cfg, v["url"].get())
@@ -3602,21 +3763,29 @@ class App(tk.Tk):
                 messagebox.showwarning(APP_NAME, "Nguồn không hợp lệ: chọn thư mục trên ổ RaiDrive hoặc dán link "
                                                  "chia sẻ PikPak (https://mypikpak.com/s/...).", parent=win)
                 return
+            hdd = v["local_dir"].get().strip() if use_hdd.get() else ""
+            pk = pikpak_join(v["pikpak_dir"].get()) if use_pk.get() else ""
+            if not hdd and not pk:
+                messagebox.showwarning(APP_NAME, "Chọn ít nhất 1 đích đến: HDD hoặc My PikPak.", parent=win)
+                return
             key = src_key(self.cfg, src)
             for j, f in enumerate(self.cfg["folders"]):
                 if j != index and src_key(self.cfg, f.get("url", "")) == key:
                     messagebox.showwarning(APP_NAME, f"Thư mục này đã có trong danh sách (dòng {j + 1}).", parent=win)
                     return
             same = old and src_key(self.cfg, old.get("url", "")) == key
-            rec = dict(old) if same else {"id": old.get("id") or new_folder_id()}   # giữ thống kê nếu cùng nguồn
+            rec = dict(old) if same else {"id": old.get("id") or new_folder_id()}
             if not v["name"].get().strip() and not is_share(src):
                 v["name"].set(os.path.basename(os.path.normpath(resolve_src(self.cfg, src))))
-            rec.update({"name": v["name"].get().strip(), "url": src,
-                        "note": note.get("1.0", "end-1c").strip(), "include": v["include"].get().strip(),
-                        "exclude": v["exclude"].get().strip(), "local_dir": to_portable(v["local_dir"].get().strip()),
-                        "pikpak_dir": v["pikpak_dir"].get().strip(),
+            rec.update({"name": v["name"].get().strip(), "url": src, "note": note.get("1.0", "end-1c").strip(),
+                        "include": v["include"].get().strip(), "exclude": v["exclude"].get().strip(),
+                        "local_dir": to_portable(hdd), "pikpak_dir": pk, "sub_movie": sub_movie.get(),
                         "split": next((k for k, t in SPLIT_CHOICES.items() if t == split.get()), "auto"),
-                        "enabled": en.get()})
+                        "enabled": en.get(), "dest_rev": 3})
+            if hdd:
+                self.cfg["library_root"] = to_portable(hdd)       # nhớ làm mặc định cho thư mục mới
+            if pk:
+                self.cfg["pikpak_root"] = pk
             if index is None:
                 self.cfg["folders"].append(rec)
             else:
@@ -3624,8 +3793,8 @@ class App(tk.Tk):
             self.save_config(); self.refresh_folders()
             win.destroy()
 
-        bb = ttk.Frame(body, style="Card.TFrame")
-        bb.grid(row=r, column=0, columnspan=3, sticky="e", pady=(16, 0))
+        bb = tk.Frame(body, bg=C_CARD)
+        bb.grid(row=r, column=0, columnspan=3, sticky="e", pady=(18, 0))
         if old.get("url"):
             ttk.Button(bb, text="↗  Mở nguồn", command=lambda: open_target(source_link(self.cfg, old))).pack(
                 side="left", padx=(0, 8))
@@ -3684,7 +3853,8 @@ class App(tk.Tk):
                   style="Muted.TLabel").pack(anchor="w", padx=12, pady=(12, 6))
         fr = tk.Frame(win, bg=C_BORDER, padx=1, pady=1)
         fr.pack(fill="both", expand=True, padx=12)
-        txt = tk.Text(fr, wrap="none", relief="flat", font=("Consolas", 10), padx=8, pady=6)
+        txt = tk.Text(fr, wrap="none", relief="flat", font=(MONO, 10), padx=8, pady=6, bg=C_FIELD, fg=C_TEXT,
+                      insertbackground=C_ACCENT)
         txt.pack(fill="both", expand=True)
 
         def ok():
@@ -3706,22 +3876,18 @@ class App(tk.Tk):
         f = self.tab_settings
         self.rd_var = tk.StringVar(value=from_portable(self.cfg.get("raidrive_root", "")))
         self.rdbase_var = tk.StringVar(value=self.cfg.get("rd_remote_base", ""))
-        self.dl_var = tk.StringVar(value=from_portable(self.cfg.get("download_dir", "")))
         self.method_var = tk.StringVar(value=DL_METHODS.get(self.cfg.get("dl_method", "auto"), DL_METHODS["auto"]))
         self.delay_var = tk.IntVar(value=int(self.cfg.get("delay", 2)))
         self.ext_var = tk.StringVar(value=self.cfg.get("extensions", ""))
+        self.bw_var = tk.StringVar(value=str(self.cfg.get("bwlimit", "") or ""))
+        self.rdmin_var = tk.IntVar(value=int(self.cfg.get("rd_check_min", 2) or 0))
         self.map_status = tk.StringVar(value="")
-        self.dlsub_var = tk.BooleanVar(value=bool(self.cfg.get("dl_movie_sub", False)))
-        self.pksub_var = tk.BooleanVar(value=bool(self.cfg.get("pk_movie_sub", True)))
         self.notify_var = tk.BooleanVar(value=bool(self.cfg.get("notify", True)))
         self.tray_var = tk.BooleanVar(value=bool(self.cfg.get("tray_on_close", True)))
         self.startwin_var = tk.BooleanVar(value=bool(self.cfg.get("start_with_windows", False)))
         self.startscan_var = tk.BooleanVar(value=bool(self.cfg.get("startup_scan", True)))
-        self.organize_var = tk.BooleanVar(value=bool(self.cfg.get("organize", False)))
         self.health_var = tk.BooleanVar(value=bool(self.cfg.get("health_check", True)))
         self.stale_var = tk.IntVar(value=int(self.cfg.get("stale_days", 7) or 0))
-        self.lib_var = tk.StringVar(value=self.cfg.get("library_root", ""))
-        self.pk_on_var = tk.BooleanVar(value=bool(self.cfg.get("pikpak_on", False)))
         self.pk_root_var = tk.StringVar(value=self.cfg.get("pikpak_root", ""))
         self.backup_on_var = tk.BooleanVar(value=bool(self.cfg.get("backup_on", True)))
         self.pk_status = tk.StringVar(value="")
@@ -3731,15 +3897,15 @@ class App(tk.Tk):
         # ----- thanh chọn mục
         top = ttk.Frame(f, style="Card.TFrame")
         top.pack(fill="x")
-        seg = tk.Frame(top, bg="#e6eaee", padx=3, pady=3)
+        seg = tk.Frame(top, bg=C_PANEL, padx=3, pady=3)
         seg.pack(side="left")
         self._set_tabs = {}
         body = ttk.Frame(f, style="Card.TFrame")
         body.pack(fill="both", expand=True, pady=(12, 0))
         self._set_pages = {}
-        for key, text in (("dl", "⬇  Nguồn & Tải về"), ("store", "▤  Lưu trữ & PikPak"),
-                          ("auto", "⚙  Tự động"), ("machine", "⌂  Máy này & Sao lưu")):
-            lb = tk.Label(seg, text=text, bg="#e6eaee", fg=C_MUTED, font=(FONT, 10, "bold"), padx=14, pady=6,
+        for key, text in (("gen", "⚙  Chung"), ("pikpak", "☁  My PikPak"), ("raidrive", "▣  RaiDrive"),
+                          ("machine", "⌂  Máy này & Sao lưu")):
+            lb = tk.Label(seg, text=text, bg=C_PANEL, fg=C_MUTED, font=(FONT, 10, "bold"), padx=14, pady=6,
                           cursor="hand2")
             lb.pack(side="left", padx=1)
             lb.bind("<Button-1>", lambda e, k=key: self._settings_page(k))
@@ -3747,23 +3913,29 @@ class App(tk.Tk):
             pg = ttk.Frame(body, style="Card.TFrame")
             self._set_pages[key] = pg
 
+        app = self
+
         class G:
             def __init__(self, parent):
                 self.p, self.r = parent, 0
                 parent.columnconfigure(1, weight=1)
 
             def section(self, text, sub=None):
-                ttk.Label(self.p, text=text, style="Section.TLabel").grid(
-                    row=self.r, column=0, columnspan=3, sticky="w", pady=(16 if self.r else 0, 2))
+                hd = tk.Frame(self.p, bg=C_CARD)
+                hd.grid(row=self.r, column=0, columnspan=3, sticky="we", pady=(18 if self.r else 0, 4))
+                tk.Frame(hd, bg=C_ACCENT, width=3, height=14).pack(side="left", padx=(0, 8))
+                tk.Label(hd, text=text.upper(), bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold")).pack(side="left")
+                tk.Frame(hd, bg=C_BORDER, height=1).pack(side="left", fill="x", expand=True, padx=(10, 0))
                 self.r += 1
                 if sub:
-                    ttk.Label(self.p, text=sub, style="Muted.TLabel", wraplength=760, justify="left").grid(
+                    ttk.Label(self.p, text=sub, style="Muted.TLabel", wraplength=820, justify="left").grid(
                         row=self.r, column=0, columnspan=3, sticky="w", pady=(0, 6))
                     self.r += 1
 
-            def entry(self, label, var, browse=None, hint=None, show=None):
+            def entry(self, label, var, browse=None, hint=None, show=None, width=None):
                 ttk.Label(self.p, text=label).grid(row=self.r, column=0, sticky="w", pady=5, padx=(0, 12))
-                ttk.Entry(self.p, textvariable=var, show=show or "").grid(row=self.r, column=1, sticky="we")
+                ttk.Entry(self.p, textvariable=var, show=show or "", width=width or 0).grid(
+                    row=self.r, column=1, sticky="w" if width else "we")
                 if browse:
                     ttk.Button(self.p, text="Chọn...", command=browse).grid(row=self.r, column=2, padx=(8, 0))
                 self.r += 1
@@ -3780,14 +3952,14 @@ class App(tk.Tk):
                     row=self.r, column=0, columnspan=3, sticky="w", pady=4)
                 self.r += 1
 
-            def combo(self, label, var, values, width=26):
+            def combo(self, label, var, values, width=40):
                 ttk.Label(self.p, text=label).grid(row=self.r, column=0, sticky="w", pady=5, padx=(0, 12))
                 ttk.Combobox(self.p, textvariable=var, state="readonly", width=width, values=values).grid(
                     row=self.r, column=1, sticky="w")
                 self.r += 1
 
             def hint(self, text):
-                ttk.Label(self.p, text=text, style="Muted.TLabel", wraplength=760, justify="left").grid(
+                ttk.Label(self.p, text=text, style="Muted.TLabel", wraplength=820, justify="left").grid(
                     row=self.r, column=1, columnspan=2, sticky="w", pady=(0, 4))
                 self.r += 1
 
@@ -3798,59 +3970,30 @@ class App(tk.Tk):
                 return fr
 
             def label(self, var, **kw):
-                ttk.Label(self.p, textvariable=var, wraplength=760, justify="left", **kw).grid(
+                ttk.Label(self.p, textvariable=var, wraplength=820, justify="left", **kw).grid(
                     row=self.r, column=0, columnspan=3, sticky="w", pady=(4, 0))
                 self.r += 1
 
-        # ----- 1. Nguồn & tải về
-        g = G(self._set_pages["dl"])
-        g.section("Ổ RaiDrive (PikPak WebDAV)", "Ổ RaiDrive đang mount PikPak. Thư mục phim chọn trên ổ này được lưu theo "
-                                               "kiểu không phụ thuộc ký tự ổ - mỗi máy chỉ cần đặt đúng ổ của máy đó.")
-        g.entry("Ổ RaiDrive (VD P:\\)", self.rd_var, self._browse_rd)
-        g.entry("Thư mục PikPak tương ứng gốc ổ", self.rdbase_var,
-                hint="Thường để TRỐNG (gốc ổ RaiDrive = gốc PikPak). Nếu mount 1 thư mục con thì ghi đường dẫn thư mục đó.")
-        fr = g.frame()
-        self.rclone_status2 = tk.StringVar()
-        ttk.Label(fr, textvariable=self.rclone_status2, style="Muted.TLabel").pack(side="left")
-        self.rclone_dl_btn2 = ttk.Button(fr, text="⬇  Tải rclone.exe", style="AccentSmall.TButton",
-                                         command=self.get_rclone)
-        fr = g.frame()
-        ttk.Button(fr, text="✓  Kiểm tra ổ RaiDrive ↔ PikPak (rclone)", command=self.check_mapping).pack(side="left")
-        g.label(self.map_status, foreground=C_ACCENT, font=(FONT, 10, "bold"))
-        g.section("Tải về máy", "rclone tải thẳng từ PikPak (nhanh, nhiều luồng, tải tiếp khi rớt mạng). "
-                                "File ngoài ổ RaiDrive / không có rclone thì copy từ ổ RaiDrive.")
-        g.entry("Thư mục tải về", self.dl_var, self._browse_dl)
-        g.check("Tạo thư mục con theo tên phim trong thư mục tải về", self.dlsub_var)
-        g.combo("Cách tải", self.method_var, tuple(DL_METHODS.values()))
-        g.spin("Nghỉ giữa 2 file (giây)", self.delay_var, 0, 60)
-        g.entry("Đuôi file cần tải", self.ext_var, hint="Cách nhau bằng dấu cách; để trống = mọi loại file")
+            def readout(self, rows):
+                """Bảng đồng hồ: đèn + các dòng 'NHÃN  giá trị' font màn hình. Trả về (đèn, {khóa: StringVar})."""
+                box = tk.Frame(self.p, bg=C_PANEL, highlightbackground=C_BORDER, highlightthickness=1)
+                box.grid(row=self.r, column=0, columnspan=3, sticky="we", pady=(4, 6))
+                self.r += 1
+                led = tk.Label(box, text="●", bg=C_PANEL, fg=C_MUTED, font=(FONT, 26))
+                led.grid(row=0, column=0, rowspan=max(1, len(rows)), sticky="n", padx=(14, 10), pady=8)
+                vals = {}
+                for i, (k, t) in enumerate(rows):
+                    tk.Label(box, text=t.upper(), bg=C_PANEL, fg=C_MUTED, font=(FONT, 8, "bold"), anchor="w",
+                             width=18).grid(row=i, column=1, sticky="w", pady=(8 if i == 0 else 1, 1))
+                    vals[k] = tk.StringVar(value="—")
+                    tk.Label(box, textvariable=vals[k], bg=C_PANEL, fg=C_TEXT, font=(MONO, 10), anchor="w",
+                             justify="left", wraplength=640).grid(row=i, column=2, sticky="w", padx=(0, 14),
+                                                                  pady=(8 if i == 0 else 1, 1))
+                box.grid_rowconfigure(len(rows), minsize=8)
+                return led, vals
 
-        # ----- 2. Lưu trữ & PikPak
-        g = G(self._set_pages["store"])
-        g.section("Ổ cứng rời (HDD)", "Tải xong copy thêm 1 bản sang <Thư mục phim HDD>\\<Tên phim>\\ "
-                                      "(bản trong thư mục tải về vẫn giữ).")
-        g.check("Tải xong copy 1 bản sang ổ HDD rời theo tên phim", self.organize_var)
-        g.entry("Thư mục phim trên HDD", self.lib_var, self._browse_lib,
-                hint="VD: E:\\Hoạt hình  →  E:\\Hoạt hình\\Doraemon\\Doraemon Tap 812.mkv")
-        g.section("My PikPak", "Lưu 1 bản vào My PikPak/<Thư mục lưu>/<Tên phim>/. File từ ổ RaiDrive / link chia sẻ "
-                               "được sao chép ngay trên máy chủ PikPak (nhanh, không tốn mạng). Tài khoản được nhớ.")
-        g.check("Lưu 1 bản vào My PikPak", self.pk_on_var)
-        fr = g.frame()
-        self.rclone_status = tk.StringVar()
-        ttk.Label(fr, textvariable=self.rclone_status, style="Muted.TLabel").pack(side="left")
-        self.rclone_dl_btn = ttk.Button(fr, text="⬇  Tải rclone.exe về thư mục tool", style="Small.TButton",
-                                        command=self.get_rclone)
-        self._refresh_rclone_status()
-        g.entry("Thư mục lưu trên My PikPak", self.pk_root_var, self.open_pikpak_browser)
-        g.check("Tạo thư mục con theo tên phim trên My PikPak (VD My Pack/2026/Tiên Nghịch/)", self.pksub_var)
-        fr = g.frame()
-        ttk.Button(fr, text="⚙  Tài khoản PikPak...", command=self.open_pikpak_login).pack(side="left")
-        ttk.Button(fr, text="✓  Kiểm tra kết nối", command=lambda: self.check_pikpak(silent=False)).pack(
-            side="left", padx=8)
-        g.label(self.pk_status, foreground=C_ACCENT, font=(FONT, 10, "bold"))
-
-        # ----- 3. Tự động
-        g = G(self._set_pages["auto"])
+        # ----- 1. Chung
+        g = G(self._set_pages["gen"])
         g.section("Tự động")
         fr = g.frame()
         ttk.Checkbutton(fr, text="Tự quét & tải mỗi", variable=self.auto_var, command=self._auto_changed).pack(side="left")
@@ -3862,20 +4005,61 @@ class App(tk.Tk):
         g.check("Quét & tải ngay sau khi khởi động (chờ 1 phút cho có mạng)", self.startscan_var)
         tray_state = "normal" if TRAY_OK else "disabled"
         g.check("Bấm X thì thu nhỏ xuống khay hệ thống (góc đồng hồ)", self.tray_var, tray_state)
-        g.check("Thông báo Windows khi có file mới / tải xong / upload xong", self.notify_var, tray_state)
+        g.check("Thông báo Windows khi có file mới / tải xong / lỗi", self.notify_var, tray_state)
+        g.section("Tải về", "Đích đến (HDD / My PikPak) đặt riêng cho từng thư mục ở tab Thư mục phim.")
+        g.combo("Cách tải", self.method_var, tuple(DL_METHODS.values()))
+        g.entry("Giới hạn tốc độ", self.bw_var, width=12,
+                hint="VD 20M = 20 MB/s, 500K = 500 KB/s. Để trống = không giới hạn (chỉ áp dụng khi tải bằng rclone).")
+        g.spin("Nghỉ giữa 2 file (giây)", self.delay_var, 0, 60)
+        g.entry("Đuôi file cần tải", self.ext_var, hint="Cách nhau bằng dấu cách; để trống = mọi loại file")
         g.section("Kiểm tra & cảnh báo", "Chạy im lặng, chỉ báo khi có vấn đề.")
-        g.check("Kiểm tra trước khi tải: ổ RaiDrive đã kết nối, rclone + PikPak, thư mục tải về, ổ HDD, "
-                "ổ còn đủ chỗ trống", self.health_var)
+        g.check("Kiểm tra trước khi tải: ổ RaiDrive, rclone + PikPak, ổ đích HDD đã cắm, còn đủ chỗ trống",
+                self.health_var)
         g.spin("Nhắc khi thư mục không có tập mới sau (ngày, 0 = tắt)", self.stale_var, 0, 90)
-        g.hint("Tự báo \"có thể thiếu tập\" khi số tập bị nhảy (VD có 088, 090 mà không có 089) và báo file tải về "
-               "bị thiếu dung lượng (tự tải lại).")
+        g.hint("Tự báo \"có thể thiếu tập\" khi số tập bị nhảy và báo file tải về bị thiếu dung lượng (tự tải lại).")
+
+        # ----- 2. My PikPak
+        g = G(self._set_pages["pikpak"])
+        g.section("Trạng thái kết nối")
+        self.pk_led, self.pk_vals = g.readout((("state", "Kết nối"), ("user", "Tài khoản đang dùng"),
+                                               ("quota", "Dung lượng"), ("rclone", "rclone"),
+                                               ("checked", "Kiểm tra lúc")))
+        fr = g.frame()
+        ttk.Button(fr, text="⟳  Kiểm tra kết nối", style="Accent.TButton",
+                   command=lambda: self.check_pikpak(silent=False, detail=True)).pack(side="left")
+        ttk.Button(fr, text="⚙  Đổi tài khoản PikPak...", command=self.open_pikpak_login).pack(side="left", padx=8)
+        self.rclone_dl_btn = ttk.Button(fr, text="⬇  Tải rclone.exe về thư mục tool", command=self.get_rclone)
+        self.rclone_status = tk.StringVar()
+        g.label(self.rclone_status, style="Muted.TLabel")
+        g.section("Mặc định cho thư mục mới", "Thư mục My PikPak điền sẵn khi thêm thư mục phim mới "
+                                              "(mỗi thư mục phim vẫn đổi riêng được).")
+        g.entry("Thư mục lưu My PikPak", self.pk_root_var, lambda: self.open_pikpak_browser())
+        self._refresh_rclone_status()
+
+        # ----- 3. RaiDrive
+        g = G(self._set_pages["raidrive"])
+        g.section("Trạng thái ổ RaiDrive")
+        self.rd_led, self.rd_vals = g.readout((("state", "Trạng thái"), ("app", "RaiDrive.exe"),
+                                               ("space", "Dung lượng"), ("ping", "Phản hồi"),
+                                               ("root", "Thư mục gốc"), ("checked", "Kiểm tra lúc")))
+        fr = g.frame()
+        ttk.Button(fr, text="⟳  Kiểm tra trạng thái", style="Accent.TButton",
+                   command=lambda: self.check_raidrive(silent=False)).pack(side="left")
+        ttk.Button(fr, text="↗  Mở ổ", command=lambda: open_target(rd_root(self.cfg))).pack(side="left", padx=8)
+        ttk.Button(fr, text="✓  Kiểm tra khớp với PikPak (rclone)", command=self.check_mapping).pack(side="left")
+        g.label(self.map_status, foreground=C_ACCENT, font=(FONT, 10, "bold"))
+        g.section("Cấu hình", "Ổ RaiDrive mount PikPak. Thư mục nguồn chọn trên ổ này được lưu không phụ thuộc ký tự "
+                              "ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
+        g.entry("Ổ RaiDrive", self.rd_var, self._browse_rd, width=14)
+        g.entry("Thư mục PikPak tương ứng gốc ổ", self.rdbase_var,
+                hint="Thường để TRỐNG (gốc ổ = gốc PikPak). Nút \"Kiểm tra khớp\" tự đoán giúp nếu ổ mount 1 thư mục con.")
+        g.spin("Tự kiểm tra ổ mỗi (phút, 0 = tắt)", self.rdmin_var, 0, 60)
 
         # ----- 4. Máy này & Sao lưu
         g = G(self._set_pages["machine"])
         g.section(f"Máy này: {MACHINE}",
-                  "Tool để trên ổ cứng di động, cắm vào nhiều máy: mỗi máy tự nhớ đường dẫn riêng (ổ RaiDrive, "
-                  "thư mục tải về, thư mục phim HDD...). Đường dẫn nằm trên chính ổ di động được lưu "
-                  "theo kiểu không phụ thuộc ký tự ổ (E:, F:...).")
+                  "Tool để trên ổ di động, cắm vào nhiều máy: mỗi máy tự nhớ đường dẫn riêng (ổ RaiDrive...). "
+                  "Đường dẫn nằm trên chính ổ di động được lưu không phụ thuộc ký tự ổ.")
         pw = ttk.Frame(self._set_pages["machine"], style="Card.TFrame")
         pw.grid(row=g.r, column=0, columnspan=3, sticky="we")
         g.r += 1
@@ -3887,8 +4071,7 @@ class App(tk.Tk):
         ttk.Button(fr, text="✕  Xóa hồ sơ máy đã chọn", style="Danger.TButton",
                    command=self.delete_profile_selected).pack(side="left", padx=8)
         g.section("Sao lưu dữ liệu", "Phòng khi ổ cứng hỏng: config.json (thư mục, cài đặt), owned.json (Danh sách "
-                                      "đã có), history.json (lịch sử) được nén và đưa lên PikPak/"
-                                      f"<Thư mục gốc>/{BACKUP_DIR}/.")
+                                      f"đã có), history.json (lịch sử) được nén và đưa lên My PikPak/{BACKUP_DIR}/.")
         g.check("Sau mỗi lần tải xong, tự sao lưu dữ liệu lên PikPak", self.backup_on_var)
         fr = g.frame()
         ttk.Button(fr, text="☁  Sao lưu lên PikPak ngay", style="Accent.TButton", command=self.backup_now).pack(side="left")
@@ -3897,7 +4080,7 @@ class App(tk.Tk):
         ttk.Button(fr, text="⇧  Khôi phục từ file...", command=self.restore_from_file).pack(side="left", padx=8)
         g.label(self.bk_status, style="Muted.TLabel")
         g.section("Thư mục Data", "Mọi dữ liệu (cấu hình, Danh sách đã có, lịch sử, đăng nhập PikPak, nhật ký) nằm trong "
-                                  "thư mục Data cạnh tool. Lên bản mới: chép thư mục Data của bản cũ sang bản mới là xong.")
+                                  "thư mục Data cạnh tool. Lên bản mới: chép thư mục Data của bản cũ sang là xong.")
         fr = g.frame()
         ttk.Button(fr, text="▸  Mở thư mục Data", command=self.open_data_dir).pack(side="left")
         ttk.Label(fr, text=str(DATA_DIR), style="Muted.TLabel").pack(side="left", padx=10)
@@ -3911,20 +4094,22 @@ class App(tk.Tk):
         ttk.Button(bi, text="✓  Lưu cài đặt", style="Success.TButton",
                    command=lambda: (self.save_config(), self.refresh_profiles(),
                                     self.status_var.set("✔ Đã lưu cài đặt cho máy " + MACHINE))).pack(side="left")
-        ttk.Button(bi, text="↗  Mở thư mục tải về",
-                   command=lambda: open_target(self._ensure_dir(self.dl_var.get().strip() or default_download_dir()))
-                   ).pack(side="left", padx=8)
         ttk.Button(bi, text="◉  Thử thông báo",
                    command=lambda: (self.save_config(), self.notify(APP_TITLE, "Thông báo hoạt động bình thường."))
-                   ).pack(side="left")
-        self._settings_page("dl")
+                   ).pack(side="left", padx=8)
+        self._settings_page("gen")
 
     def _settings_page(self, key):
         for k, pg in self._set_pages.items():
             pg.pack_forget()
             on = k == key
-            self._set_tabs[k].config(bg=C_CARD if on else "#e6eaee", fg=C_ACCENT if on else C_MUTED)
+            self._set_tabs[k].config(bg=C_CARD if on else C_PANEL, fg=C_ACCENT if on else C_MUTED)
         self._set_pages[key].pack(fill="both", expand=True)
+        if key == "raidrive":
+            self.check_raidrive(silent=True)
+        elif key == "pikpak" and not getattr(self, "_pk_detail_done", False):
+            self.check_pikpak(silent=True, detail=True)
+
 
     # ================================================================ HỒ SƠ MÁY (ổ di động)
     def _apply_profile(self, prof):
@@ -3966,8 +4151,7 @@ class App(tk.Tk):
         for i, (name, p) in enumerate(sorted(self.cfg.get("profiles", {}).items(),
                                              key=lambda kv: -kv[1].get("updated", 0))):
             when = dt.datetime.fromtimestamp(p.get("updated", 0)).strftime("%H:%M %d/%m/%Y") if p.get("updated") else ""
-            paths = (f"RaiDrive: {p.get('raidrive_root') or '-'}   |   Tải về: {p.get('download_dir') or '-'}   |   "
-                     f"HDD: {p.get('library_root') or '-'}")
+            paths = f"Ổ RaiDrive: {p.get('raidrive_root') or '-'}"
             tags = ["odd"] if i % 2 else []
             if name == MACHINE:
                 tags.append("done")
@@ -3995,11 +4179,8 @@ class App(tk.Tk):
             self.save_config(); self.refresh_profiles()
 
     def _reload_setting_vars(self):
-        for var, key in ((self.rd_var, "raidrive_root"), (self.dl_var, "download_dir"),
-                         (self.lib_var, "library_root"),
-                         (self.pk_root_var, "pikpak_root")):
+        for var, key in ((self.rd_var, "raidrive_root"), (self.pk_root_var, "pikpak_root")):
             var.set(self.cfg.get(key, "") or "")
-        self.organize_var.set(bool(self.cfg.get("organize")))
         self.startwin_var.set(bool(self.cfg.get("start_with_windows")))
 
     def _new_machine_dialog(self):
@@ -4023,15 +4204,23 @@ class App(tk.Tk):
         if hasattr(self, "pk_status"):
             self.pk_status.set(text)
 
-    def check_pikpak(self, silent=True):
-        """Tự đăng nhập (từ tài khoản đã nhớ) và kiểm tra kết nối PikPak - chạy nền."""
+    def check_pikpak(self, silent=True, detail=False):
+        """Tự đăng nhập (từ tài khoản đã nhớ) và kiểm tra kết nối PikPak - chạy nền.
+        detail=True: đọc thêm dung lượng, phiên bản rclone cho bảng trạng thái tab My PikPak."""
         self._set_pk_status("☁ PikPak: đang kết nối...", None)
         cfg = json.loads(json.dumps(self.cfg))
+        if detail:
+            self._pk_detail_done = True
+            self._pk_panel(None, {"state": "đang kiểm tra...", "user": cfg.get("pikpak_user") or "(chưa có)"})
 
         def job():
             r = find_rclone(cfg.get("rclone_path", ""))
             if not r:
                 self.q.put(("pkstatus", "☁ PikPak: chưa có rclone.exe - bấm vào đây để tải", False))
+                if detail:
+                    self.q.put(("call", lambda: self._pk_panel(False, {
+                        "state": "✘ Chưa có rclone.exe", "rclone": "chưa có - bấm \"Tải rclone.exe\"",
+                        "quota": "—", "checked": f"{dt.datetime.now():%H:%M:%S %d/%m}"}), (), {}, threading.Event()))
                 return
             remote = cfg.get("pikpak_remote", "pikpak") or "pikpak"
             conf_ok = RCLONE_CONF.is_file() and f"[{remote}]" in RCLONE_CONF.read_text(encoding="utf-8", errors="ignore")
@@ -4055,14 +4244,131 @@ class App(tk.Tk):
             if not conf_ok:
                 self.q.put(("pkstatus", "☁ PikPak: chưa đăng nhập (bấm để thiết lập)", None))
                 return
+            t0 = time.time()
             code, out, err = run_rclone(r, ["lsd", f"{remote}:"], 60)
+            ms = int((time.time() - t0) * 1000)
             if code == 0:
                 self.q.put(("pkstatus", "☁ PikPak: ✔ đã kết nối" + (f" ({user})" if user else ""), True))
             else:
                 self.q.put(("pkstatus", "☁ PikPak: ⚠ lỗi kết nối - " + (err or out).strip()[-120:], False))
             if not silent:
                 self.q.put(("log", "PikPak: " + ("kết nối OK" if code == 0 else "lỗi kết nối")))
+            if detail:
+                info = {"checked": f"{dt.datetime.now():%H:%M:%S %d/%m}",
+                        "state": (f"✔ Đã kết nối  ·  {ms} ms" if code == 0 else
+                                  "✘ Lỗi: " + (err or out).strip()[-160:]),
+                        "user": user or "(chưa lưu tài khoản)"}
+                c2, o2, _e = run_rclone(r, ["version"], 30)
+                info["rclone"] = (o2.splitlines()[0].strip() if c2 == 0 and o2.strip() else "?") + f"   ·   {r}"
+                if code == 0:
+                    c3, o3, e3 = run_rclone(r, ["about", f"{remote}:", "--json"], 60)
+                    try:
+                        j = json.loads(o3)
+                        tot, used = int(j.get("total") or 0), int(j.get("used") or 0)
+                        free = int(j.get("free") or max(0, tot - used))
+                        pct = used * 100 // tot if tot else 0
+                        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
+                        info["quota"] = (f"{bar} {pct}%   ·   đã dùng {human_size(used)} / {human_size(tot)}   ·   "
+                                         f"trống {human_size(free)}") if tot else f"đã dùng {human_size(used)}"
+                    except (ValueError, TypeError):
+                        info["quota"] = "không đọc được"
+                else:
+                    info["quota"] = "—"
+                ok = code == 0
+                self.q.put(("call", lambda: self._pk_panel(ok, info), (), {}, threading.Event()))
         threading.Thread(target=job, daemon=True).start()
+
+    def _pk_panel(self, ok, info):
+        try:
+            self.pk_led.config(fg=C_GREEN if ok else (C_RED if ok is False else C_ACCENT))
+            for k, v in info.items():
+                if k in self.pk_vals:
+                    self.pk_vals[k].set(v)
+        except (AttributeError, tk.TclError):
+            pass
+
+    # ================================================================ RAIDRIVE: trạng thái ổ
+    def check_raidrive(self, silent=True):
+        """Kiểm tra ổ RaiDrive (chạy nền): có ổ không, RaiDrive.exe có chạy, dung lượng, thời gian phản hồi."""
+        if getattr(self, "_rd_busy", False):
+            return
+        self._rd_busy = True
+        cfg = json.loads(json.dumps(self.cfg))
+        if hasattr(self, "rd_var"):
+            rd = self.rd_var.get().strip()
+            cfg["raidrive_root"] = (rd[:2] + os.sep) if len(rd) == 2 and rd[1] == ":" else rd
+        try:
+            self.rd_vals["state"].set("đang kiểm tra...")
+        except (AttributeError, tk.TclError):
+            pass
+
+        def job():
+            root = rd_root(cfg)
+            info = {"checked": f"{dt.datetime.now():%H:%M:%S %d/%m}"}
+            app_on = None
+            if os.name == "nt":
+                try:
+                    out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RaiDrive*", "/NH"], capture_output=True,
+                                         text=True, creationflags=subprocess.CREATE_NO_WINDOW, timeout=15).stdout
+                    app_on = "raidrive" in out.lower()
+                except Exception:
+                    app_on = None
+            info["app"] = {True: "✔ đang chạy", False: "✘ không chạy - mở RaiDrive", None: "—"}[app_on]
+            ok = False
+            if not root:
+                info.update(state="✘ Chưa đặt ổ RaiDrive", space="—", ping="—", root="—")
+            elif not os.path.isdir(root):
+                info.update(state=f"✘ Không thấy ổ {root} - RaiDrive chưa kết nối", space="—", ping="—", root="—")
+            else:
+                t0 = time.time()
+                try:
+                    names = [n for n in os.listdir(root) if not n.startswith((".", "$"))]
+                    ms = int((time.time() - t0) * 1000)
+                    ok = True
+                    info["ping"] = f"{ms} ms" + ("   (chậm)" if ms > 3000 else "")
+                    dirs = [n for n in names if os.path.isdir(os.path.join(root, n))]
+                    info["root"] = f"{len(dirs)} thư mục, {len(names) - len(dirs)} file:  " + ", ".join(
+                        sorted(dirs, key=natural_key)[:6]) + (" ..." if len(dirs) > 6 else "")
+                    info["state"] = f"✔ Đã kết nối  ·  {root}"
+                except OSError as e:
+                    info.update(state=f"✘ Ổ {root} lỗi: {e}", ping="—", root="—")
+                try:
+                    du = shutil.disk_usage(root)
+                    pct = du.used * 100 // du.total if du.total else 0
+                    info["space"] = (f"{'█' * (pct // 5)}{'░' * (20 - pct // 5)} {pct}%   ·   đã dùng "
+                                     f"{human_size(du.used)} / {human_size(du.total)}   ·   trống {human_size(du.free)}")
+                except OSError:
+                    info["space"] = "không đọc được"
+            self.q.put(("call", lambda: self._rd_done(ok, info, silent), (), {}, threading.Event()))
+        threading.Thread(target=job, daemon=True).start()
+
+    def _rd_done(self, ok, info, silent):
+        self._rd_busy = False
+        prev = getattr(self, "rd_ok", None)
+        self.rd_ok = ok
+        try:
+            self.rd_led.config(fg=C_GREEN if ok else C_RED)
+            for k, v in info.items():
+                if k in self.rd_vals:
+                    self.rd_vals[k].set(v)
+        except (AttributeError, tk.TclError):
+            pass
+        try:
+            self.side_rd.config(text=("▣ RaiDrive: ✔ " + (rd_root(self.cfg) or "")) if ok else
+                                ("▣ RaiDrive: ✘ " + info.get("state", "").lstrip("✘ ")),
+                                fg="#86efac" if ok else "#fca5a5")
+        except (AttributeError, tk.TclError):
+            pass
+        if prev is True and ok is False:
+            self.notify("⚠ Mất kết nối ổ RaiDrive", info.get("state", ""))
+        if not silent:
+            self.log("RaiDrive: " + info.get("state", ""))
+
+    def _rd_tick(self):
+        mins = int(self.cfg.get("rd_check_min", 2) or 0)
+        if mins and any(str(f.get("url", "")).startswith(RD_TOKEN) for f in self.cfg["folders"]):
+            self.check_raidrive(silent=True)
+        self.after(max(1, mins or 5) * 60000, self._rd_tick)
 
     # ================================================================ SAO LƯU / KHÔI PHỤC
     def _backup_remote(self):
@@ -4188,7 +4494,7 @@ class App(tk.Tk):
     def _update_found(self, tag, notes, url, silent):
         newer = ver_tuple(tag) > ver_tuple(APP_VERSION)
         if newer:
-            self.top_upd.config(text=f"⟳  Có bản {tag}", bg=C_ACCENT, fg="white", highlightbackground=C_ACCENT)
+            self.top_upd.config(text=f"⟳  Có bản {tag}", bg=C_ACCENT, fg=C_ON_ACCENT, highlightbackground=C_ACCENT)
             self.log(f"⟳ Có bản mới {tag} (đang dùng {APP_VERSION}).")
             self.notify("Có bản mới " + tag, "Bấm nút Cập nhật trên tool để cài.")
         if silent:
@@ -4478,25 +4784,26 @@ class App(tk.Tk):
         else:
             self.pk_status.set("⚠ Chưa kết nối được. Bấm \"Đăng nhập PikPak...\".  " + (err or out).strip()[-200:])
 
-    def open_pikpak_browser(self):
-        r = self._need_rclone()
+    def open_pikpak_browser(self, target_var=None, parent=None):
+        r = self._need_rclone(parent=parent)
         if not r:
             return
+        target_var = target_var or self.pk_root_var
         remote = self.cfg.get("pikpak_remote", "pikpak") or "pikpak"
-        win = tk.Toplevel(self)
-        win.title("Chọn thư mục trên PikPak")
+        win = tk.Toplevel(parent or self)
+        win.title("Chọn thư mục trên My PikPak")
         win.configure(bg=C_CARD)
-        win.transient(self)
+        win.transient(parent or self)
         win.geometry(f"520x460+{self.winfo_rootx() + 200}+{self.winfo_rooty() + 100}")
         body = ttk.Frame(win, style="Card.TFrame", padding=14)
         body.pack(fill="both", expand=True)
-        cur = [pikpak_join(self.pk_root_var.get())]
+        cur = [pikpak_join(target_var.get())]
         path_var = tk.StringVar()
         ttk.Label(body, textvariable=path_var, style="Section.TLabel", wraplength=480).pack(anchor="w")
         lf = tk.Frame(body, bg=C_BORDER, padx=1, pady=1)
         lf.pack(fill="both", expand=True, pady=8)
         lb = tk.Listbox(lf, font=(FONT, 10), relief="flat", activestyle="none", selectbackground=C_SEL,
-                        selectforeground=C_TEXT)
+                        selectforeground=C_ACCENT, bg=C_FIELD, fg=C_TEXT, highlightthickness=0)
         lb.pack(fill="both", expand=True)
         info = tk.StringVar()
         ttk.Label(body, textvariable=info, style="Muted.TLabel").pack(anchor="w")
@@ -4548,8 +4855,9 @@ class App(tk.Tk):
                 load(cur[0])
 
         def choose():
-            self.pk_root_var.set(cur[0])
-            self.save_config()
+            target_var.set(cur[0])
+            if target_var is self.pk_root_var:
+                self.save_config()
             win.destroy()
         lb.bind("<Double-1>", open_sel)
         bb = ttk.Frame(body, style="Card.TFrame")
@@ -4563,14 +4871,15 @@ class App(tk.Tk):
     @staticmethod
     def _upload_text(h):
         u = h.get("upload", "")
-        return {"pending": "⏳  Chờ lưu", "done": "✔  Đã lưu My PikPak", "error": "⚠  Lỗi lưu PikPak"}.get(
+        return {"pending": "⏳  Chờ lưu", "done": "✔  Đã lưu My PikPak", "error": "⚠  Lỗi lưu PikPak",
+                "skip": "—"}.get(
             u, h.get("upload_msg", "") if u == "uploading" else "")
 
     def enqueue_upload(self, code, force=False):
         h = self.history.get(code)
-        if not h or not (self.cfg.get("pikpak_on") or force):
+        if not h:
             return False
-        if h.get("upload") in ("pending", "uploading") or (h.get("upload") == "done" and not force):
+        if h.get("upload") in ("pending", "uploading") or (h.get("upload") in ("done", "skip") and not force):
             return False
         if code in self.up_queued or not (h.get("remote_src") or (h.get("path") and os.path.isfile(h["path"]))):
             return False
@@ -4619,7 +4928,11 @@ class App(tk.Tk):
                     self.q.put(("upload", code, "error", "Chưa có rclone.exe"))
                     continue
                 fc = next((f for f in self.cfg["folders"] if fid(f) == h.get("folder_code")), None)
-                dest = pikpak_dest(self.cfg, fc, h.get("movie") or h.get("folder", ""))
+                pkf = pikpak_folder(self.cfg, fc, h.get("movie") or h.get("folder", ""))
+                if not pkf:
+                    self.q.put(("upload", code, "error", "Thư mục phim không đặt đích My PikPak"))
+                    continue
+                dest = f"{self.cfg.get('pikpak_remote', 'pikpak') or 'pikpak'}:{pkf}"
                 if rsrc:      # file gốc đã nằm trên PikPak -> sao chép trên máy chủ (nhanh, không tốn mạng)
                     self.q.put(("upload", code, "uploading", "☁  Đang lưu..."))
                     ok, msg = rclone_copy(r, rsrc, f"{dest}/{h.get('name', '')}")
@@ -4669,21 +4982,11 @@ class App(tk.Tk):
             self.log(f"⚠ Lưu My PikPak lỗi: {h.get('name', '')} — {info}")
             self.save_history()
 
-    def _browse_lib(self):
-        p = filedialog.askdirectory(title="Chọn thư mục phim")
-        if p:
-            self.lib_var.set(os.path.normpath(p))
-
     def _browse_rd(self):
         p = filedialog.askdirectory(title="Chọn ổ RaiDrive (mount PikPak)")
         if p:
             p = os.path.normpath(p)
             self.rd_var.set(p if len(p) > 3 else p[:2] + os.sep)
-
-    def _browse_dl(self):
-        p = filedialog.askdirectory(title="Chọn thư mục tải phim về máy")
-        if p:
-            self.dl_var.set(os.path.normpath(p))
 
     @staticmethod
     def _ensure_dir(p):
@@ -4752,17 +5055,16 @@ class App(tk.Tk):
             rd = self.rd_var.get().strip()
             self.cfg["raidrive_root"] = (rd[:2] + os.sep) if len(rd) == 2 and rd[1] == ":" else rd
             self.cfg["rd_remote_base"] = pikpak_join(self.rdbase_var.get())
-            self.cfg["download_dir"] = self.dl_var.get().strip() or default_download_dir()
             self.cfg["dl_method"] = next((k for k, v in DL_METHODS.items() if v == self.method_var.get()), "auto")
             self.cfg["extensions"] = self.ext_var.get().strip()
-            self.cfg["dl_movie_sub"] = self.dlsub_var.get()
-            self.cfg["pk_movie_sub"] = self.pksub_var.get()
+            self.cfg["bwlimit"] = re.sub(r"\s+", "", self.bw_var.get())
+            try:
+                self.cfg["rd_check_min"] = max(0, int(self.rdmin_var.get()))
+            except (tk.TclError, ValueError):
+                self.cfg["rd_check_min"] = 2
             self.cfg["notify"] = self.notify_var.get()
             self.cfg["tray_on_close"] = self.tray_var.get()
             self.cfg["startup_scan"] = self.startscan_var.get()
-            self.cfg["organize"] = self.organize_var.get()
-            self.cfg["library_root"] = self.lib_var.get().strip()
-            self.cfg["pikpak_on"] = self.pk_on_var.get()
             self.cfg["backup_on"] = self.backup_on_var.get()
             self.cfg["pikpak_root"] = pikpak_join(self.pk_root_var.get())
             want = self.startwin_var.get()

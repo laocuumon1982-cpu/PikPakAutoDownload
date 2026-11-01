@@ -1,6 +1,16 @@
 PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.0  (01/11/2026)
+  - Đổi cách hoạt động: mỗi thư mục phim tự có Nguồn (link chia sẻ PikPak / ổ RaiDrive), Tên phim, Ghi chú,
+    Đích HDD (copy) và Đích My PikPak (save), xem trước đường dẫn đích. Tải thẳng về thư mục HDD.
+    Cấu hình cũ tự chuyển sang (D:\DOWNLOAD HH3D + My Pack/2026).
+  - Nút "⬇ Tải mới" trên từng thẻ thư mục (chỉ quét & tải thư mục đó).
+  - Cài đặt làm lại: Chung · My PikPak (trạng thái kết nối, tài khoản, dung lượng, rclone) · RaiDrive
+    (trạng thái ổ, RaiDrive.exe, dung lượng, phản hồi, tự kiểm tra định kỳ + báo mất kết nối) · Máy này & Sao lưu.
+  - Giới hạn tốc độ tải (rclone --bwlimit). Thanh bên hiện trạng thái RaiDrive + PikPak.
+  - Giao diện mới phong cách máy móc hiện đại: nền than chì, đèn báo cam hổ phách, số liệu font màn hình.
+
 v1.1  (01/11/2026)
   - Tải về D:\DOWNLOAD HH3D\<Tên phim>\ (tự đổi cấu hình cũ). Bỏ bước copy sang HDD (vẫn bật lại được).
   - Nút "⬇ Tải rclone.exe" ở Cài đặt -> Nguồn & Tải về; bấm dòng "PikPak: chưa có rclone.exe" ở thanh bên để tải;
