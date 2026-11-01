@@ -1,12 +1,14 @@
-PIKPAK AUTO DOWNLOAD v2.2 by Duy Anh - HƯỚNG DẪN
+PIKPAK AUTO DOWNLOAD v2.3 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
    Mỗi "thư mục phim" gồm:  NGUỒN  ->  ĐÍCH ĐẾN
-   - Nguồn: link chia sẻ PikPak (mypikpak.com/s/...) hoặc thư mục trên ổ RaiDrive (VD Z:\Update HH3D kimngonx5)
-   - Đích HDD (copy):      VD D:\DOWNLOAD HH3D\<Tên phim>\   (copy từ ổ RaiDrive, nhiều luồng song song)
-   - Đích My PikPak (save): VD My Pack/2026/<Tên phim>/   (rclone sao chép trên máy chủ PikPak, chạy song song)
-   Tool quét nguồn, chỉ lấy tập CHƯA có trong "Danh sách đã có" -> save My PikPak -> copy về HDD
+   - Nguồn: link chia sẻ PikPak (mypikpak.com/s/...) hoặc thư mục trên ổ RaiDrive = WebDAV PikPak của NGƯỜI CHIA SẺ
+     (VD Z:\Update HH3D kimngonx5)
+   - Đích HDD (copy):      VD D:\DOWNLOAD HH3D\<Tên phim>\   (copy 1 luồng từ ổ RaiDrive)
+   - Đích My PikPak (save): VD My Pack/2026/<Tên phim>/   (rclone - tài khoản CỦA BẠN - upload bản đã copy về HDD,
+                                                           chạy nền song song với file kế tiếp)
+   Tool quét nguồn, chỉ lấy tập CHƯA có trong "Danh sách đã có" -> copy về HDD -> upload My PikPak
    -> thêm vào Danh sách đã có để lần sau không tải lại.
 
 LẦN ĐẦU
@@ -14,7 +16,7 @@ LẦN ĐẦU
    2. Cài đặt -> My PikPak: "Đổi tài khoản PikPak..." nhập email / mật khẩu -> "Kiểm tra kết nối".
       Bảng trạng thái hiện: kết nối (ms), tài khoản đang dùng, dung lượng đã dùng / còn trống, phiên bản rclone.
    3. Cài đặt -> RaiDrive: ổ = Z:\ -> "Kiểm tra trạng thái" (ổ có kết nối không, RaiDrive.exe có chạy, dung
-      lượng, thời gian phản hồi) -> "Kiểm tra khớp với PikPak (rclone)" để rclone tải thẳng từ PikPak (nhanh).
+      lượng, thời gian phản hồi).
    4. Tab Thư mục phim -> "Sửa" thư mục có sẵn (hoặc "＋ Thêm thư mục"):
       Nguồn phim · Tên phim · Ghi chú · Copy về HDD · Save vào My PikPak · (tạo thư mục con theo tên phim).
       Khung xanh bên dưới cho xem trước đường dẫn đích.
@@ -22,20 +24,15 @@ LẦN ĐẦU
    6. Bấm "⬇ Tải mới" ở thẻ thư mục (chỉ thư mục đó) hoặc tab Quét & Tải -> "Quét & Tải" (tất cả).
       Hoặc bật "Tự quét mỗi 60 phút" ở thanh bên trái.
 
-Ổ RAIDRIVE LÀ TÀI KHOẢN PIKPAK KHÁC (VD "PikPak - Thúng")
-   rclone (tài khoản My PikPak) không thấy thư mục trên ổ đó -> không sao chép trên máy chủ được. Tool tự nhận ra:
-   copy từ ổ RaiDrive về HDD, rồi upload bản trên HDD lên My PikPak (chạy nền, song song với file kế tiếp).
-   Nếu RaiDrive không cho đọc nhiều luồng, tool tự chuyển sang copy 1 luồng.
-
 NGUỒN CÓ NHIỀU PHIM
    Tool tự tách tên phim: theo thư mục con cấp 1, không có thì theo tên file (bỏ số tập, [tag]):
    "[HH3D] Tiên Nghịch - Tập 98 [4K].mp4" -> "Tiên Nghịch". Đổi cách tách: Sửa -> NÂNG CAO.
 
 CÀI ĐẶT
-   - Chung: tự quét, khởi động cùng Windows, khay hệ thống, thông báo; cách tải, GIỚI HẠN TỐC ĐỘ (VD 20M),
+   - Chung: tự quét, khởi động cùng Windows, khay hệ thống, thông báo; GIỚI HẠN TỐC ĐỘ UPLOAD (VD 20M),
      nghỉ giữa 2 file, đuôi file; kiểm tra trước khi tải, nhắc thư mục lâu không có tập mới.
    - My PikPak: trạng thái kết nối + tài khoản + dung lượng, đổi tài khoản, tải rclone, thư mục mặc định.
-   - RaiDrive: trạng thái ổ, tự kiểm tra mỗi N phút (mất kết nối là có thông báo), kiểm tra khớp với PikPak.
+   - RaiDrive: trạng thái ổ, tự kiểm tra mỗi N phút (mất kết nối là có thông báo).
    - rclone: trạng thái, phiên bản, cấu hình PikPak; không có thì tự tải; nút tải lại / cập nhật bản mới.
    - Máy này & Sao lưu: hồ sơ nhiều máy, sao lưu dữ liệu lên PikPak / ra file, mở thư mục Data.
    Thanh bên trái (mục Kết nối) luôn hiện trạng thái RaiDrive và PikPak - bấm vào để mở trang tương ứng.

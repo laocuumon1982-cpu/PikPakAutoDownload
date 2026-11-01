@@ -1,6 +1,13 @@
 PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.3  (01/11/2026)
+  - Đổi cách hoạt động: ổ RaiDrive = WebDAV PikPak của người chia sẻ, rclone = tài khoản của bạn.
+    + Copy về HDD: luôn copy 1 luồng từ ổ RaiDrive (bỏ copy đa luồng / rclone tải thẳng).
+    + Save My PikPak: rclone upload bản đã copy về HDD (chạy nền, song song với file kế tiếp; có giới hạn tốc độ).
+  - Bỏ ô "Cách copy", "Số luồng copy", "Thư mục PikPak tương ứng gốc ổ" và nút "Kiểm tra khớp" (không còn cần).
+  - Bảng Quét & Tải cập nhật trạng thái upload My PikPak theo thời gian thực.
+
 v2.2  (01/11/2026)
   - Sửa: copy đa luồng từ ổ RaiDrive lỗi "[Errno 2] No such file or directory" (RaiDrive không cho đọc song song)
     -> tự chuyển sang copy 1 luồng ngay, các file sau cũng copy 1 luồng.

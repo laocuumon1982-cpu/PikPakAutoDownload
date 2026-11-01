@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v2.2 by Duy Anh
+PikPak Auto Download v2.3 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v2.2 by Duy Anh"
+APP_VERSION = "v2.3 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -3037,19 +3037,6 @@ class App(tk.Tk):
         """Tải lần lượt từng file: về máy -> kiểm tra dung lượng -> copy sang HDD -> lưu vào My PikPak."""
         self.q.put(("progress", 0, len(items)))
         ok_names, bad = [], 0
-        self._remote_ok = {}
-        r = find_rclone()
-        for fc in {it[4] for it in items}:
-            f = next((x for x in cfg["folders"] if fid(x) == fc), None)
-            src = resolve_src(cfg, (f or {}).get("url", ""))
-            rem = remote_of(cfg, src) if (r and src and not is_share(src)) else None
-            if rem:
-                code_, out, err = run_rclone(r, ["lsf", rem, "--max-depth", "1", "--dirs-only"], 90)
-                self._remote_ok[fc] = code_ == 0
-                if code_ != 0:
-                    self.log(f"[{(f or {}).get('name', '')}] rclone không thấy thư mục nguồn trên tài khoản PikPak đang "
-                             "kết nối (ổ RaiDrive là tài khoản khác?) → copy từ ổ RaiDrive, lưu My PikPak bằng cách "
-                             "upload từ file đã copy về HDD.")
         for i, item in enumerate(items, 1):
             if self.stop_flag.is_set():
                 break
@@ -3236,29 +3223,16 @@ class App(tk.Tk):
             src_remote = target
             saved = target if pk_dir else ""
         pk_thread, pk_res = None, {}
-        if not meta.get("share"):
-            src_remote = remote_of(cfg, meta.get("path")) if rclone else None
-            if src_remote and getattr(self, "_remote_ok", {}).get(folder_code) is False:
-                src_remote = None                  # tài khoản khác: không sao chép trên máy chủ được
-            if pk_dir and src_remote:
-                # lưu My PikPak bằng rclone (sao chép trên máy chủ) CHẠY SONG SONG với copy về HDD
-                target = f"{remote}:{pikpak_join(pk_dir, name)}"
-
-                def pk_job():
-                    pk_res["ok"], pk_res["msg"] = rclone_copy(rclone, src_remote, target, None, self.stop_flag)
-                    pk_res["target"] = target
-                pk_thread = threading.Thread(target=pk_job, daemon=True)
-                pk_thread.start()
-                if not hdd_dir:
-                    self.q.put(("rowstatus", fcode, "☁  Đang lưu vào My PikPak...", "dl"))
+        # Nguồn trên ổ RaiDrive = WebDAV PikPak của NGƯỜI CHIA SẺ -> rclone (tài khoản của bạn) không đọc được:
+        # copy 1 luồng từ ổ RaiDrive về HDD, rồi rclone upload bản trên HDD lên My PikPak (chạy nền).
         # ----- 2. tải / copy về HDD
         dst = ""
         if hdd_dir:
             os.makedirs(hdd_dir, exist_ok=True)
             dst = os.path.join(hdd_dir, safe_name(name))
             self.q.put(("rowstatus", fcode, "⬇  Đang tải về HDD...", "dl"))
-            use_copy = cfg.get("dl_method", "copy") == "copy" and meta.get("path")
-            threads = max(1, min(16, int(cfg.get("copy_threads", 4) or 4)))
+            use_copy = bool(meta.get("path"))
+            threads = 1                            # RaiDrive: copy 1 luồng
             if os.path.isfile(dst) and size and os.path.getsize(dst) == size:
                 ok, msg = True, ""                 # đã có sẵn
             elif use_copy:                         # copy từ ổ RaiDrive (đa luồng)
@@ -3677,7 +3651,7 @@ class App(tk.Tk):
 
     PAGE_INFO = {
         "folders": ("Thư mục phim", "Nguồn (link chia sẻ PikPak / ổ RaiDrive) → đích HDD + My PikPak · quét file, đánh dấu tập đã có"),
-        "scan": ("Quét & Tải", "Tìm tập mới chưa có trong Danh sách đã có → save My PikPak → copy về HDD"),
+        "scan": ("Quét & Tải", "Tìm tập mới chưa có trong Danh sách đã có → copy về HDD → rclone upload lên My PikPak"),
         "history": ("Lịch sử tải", "Theo dõi tải xong · copy vào thư mục phim · upload PikPak"),
         "settings": ("Cài đặt", "Chung · My PikPak · RaiDrive · rclone · Máy này & Sao lưu"),
     }
@@ -3901,7 +3875,7 @@ class App(tk.Tk):
         def pick_pk():
             self.open_pikpak_browser(target_var=v["pikpak_dir"], parent=win)
 
-        first = field("Nguồn phim *", "url", "Link chia sẻ PikPak / thư mục trên ổ RaiDrive",
+        first = field("Nguồn phim *", "url", "Link chia sẻ / ổ RaiDrive (WebDAV người chia sẻ)",
                       (("▣ Chọn trên RaiDrive...", lambda: pick_dir("url", "Chọn thư mục phim trên ổ RaiDrive",
                                                                     rd_root(self.cfg))),))
         tk.Label(body, text="VD: https://mypikpak.com/s/XXXX   (có mật khẩu: thêm ?pwd=xxxx)   hoặc   Z:\\Update HH3D",
@@ -3922,7 +3896,7 @@ class App(tk.Tk):
         tk.Label(body, text="ĐÍCH ĐẾN", bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold")).grid(
             row=r, column=0, columnspan=3, sticky="w")
         r += 1
-        ttk.Checkbutton(body, text="Copy về HDD", variable=use_hdd).grid(row=r, column=0, sticky="w", pady=6)
+        ttk.Checkbutton(body, text="Copy về HDD của PC", variable=use_hdd).grid(row=r, column=0, sticky="w", pady=6)
         e_hdd = ttk.Entry(body, textvariable=v["local_dir"], width=62)
         e_hdd.grid(row=r, column=1, sticky="we", pady=6)
         ttk.Button(body, text="Chọn...", style="Small.TButton",
@@ -3930,10 +3904,13 @@ class App(tk.Tk):
                                                                                            padx=(8, 0), sticky="w")
         r += 1
         ttk.Checkbutton(body, text="Save vào My PikPak", variable=use_pk).grid(row=r, column=0, sticky="w", pady=6)
+        tk.Label(body, text="copy 1 luồng từ ổ RaiDrive  →  HDD          rclone (tài khoản của bạn) upload bản trên HDD  →  My PikPak",
+                 bg=C_CARD, fg=C_MUTED, font=(FONT, 8)).grid(row=r + 1, column=1, columnspan=2, sticky="w")
         e_pk = ttk.Entry(body, textvariable=v["pikpak_dir"], width=62)
         e_pk.grid(row=r, column=1, sticky="we", pady=6)
         ttk.Button(body, text="Chọn...", style="Small.TButton", command=pick_pk).grid(row=r, column=2,
                                                                                      padx=(8, 0), sticky="w")
+        r += 1
         r += 1
         ttk.Checkbutton(body, text="Tạo thư mục con theo tên phim ở đích (VD  ...\\Tiên Nghịch\\  ·  My Pack/2026/Tiên Nghịch/)",
                         variable=sub_movie).grid(row=r, column=1, columnspan=2, sticky="w", pady=(2, 0))
@@ -4242,13 +4219,11 @@ class App(tk.Tk):
         tray_state = "normal" if TRAY_OK else "disabled"
         g.check("Bấm X thì thu nhỏ xuống khay hệ thống (góc đồng hồ)", self.tray_var, tray_state)
         g.check("Thông báo Windows khi có file mới / tải xong / lỗi", self.notify_var, tray_state)
-        g.section("Copy & Save", "Đích đến (HDD / My PikPak) đặt riêng cho từng thư mục ở tab Thư mục phim. "
-                                 "Save My PikPak (rclone) chạy song song với copy về HDD.")
-        g.combo("Cách copy về HDD", self.method_var, tuple(DL_METHODS.values()), width=48)
-        g.spin("Số luồng copy song song", self.thr_var, 1, 16)
-        g.hint("Copy từ ổ RaiDrive bằng nhiều luồng đọc cùng lúc (nhanh hơn nhiều với ổ mạng). 4-8 là hợp lý.")
-        g.entry("Giới hạn tốc độ", self.bw_var, width=12,
-                hint="VD 20M = 20 MB/s, 500K = 500 KB/s. Để trống = không giới hạn (chỉ áp dụng khi tải bằng rclone).")
+        g.section("Copy & Save", "Đích đến đặt riêng cho từng thư mục ở tab Thư mục phim. Copy về HDD: copy 1 luồng từ "
+                                 "ổ RaiDrive. Save My PikPak: rclone (tài khoản của bạn) upload bản đã copy về HDD, "
+                                 "chạy nền song song với file kế tiếp.")
+        g.entry("Giới hạn tốc độ upload", self.bw_var, width=12,
+                hint="VD 20M = 20 MB/s, 500K = 500 KB/s. Để trống = không giới hạn (áp dụng cho rclone upload My PikPak).")
         g.spin("Nghỉ giữa 2 file (giây)", self.delay_var, 0, 60)
         g.entry("Đuôi file cần tải", self.ext_var, hint="Cách nhau bằng dấu cách; để trống = mọi loại file")
         g.section("Kiểm tra & cảnh báo", "Chạy im lặng, chỉ báo khi có vấn đề.")
@@ -4285,13 +4260,9 @@ class App(tk.Tk):
         ttk.Button(fr, text="⟳  Kiểm tra trạng thái", style="Accent.TButton",
                    command=lambda: self.check_raidrive(silent=False)).pack(side="left")
         ttk.Button(fr, text="↗  Mở ổ", command=lambda: open_target(rd_root(self.cfg))).pack(side="left", padx=8)
-        ttk.Button(fr, text="✓  Kiểm tra khớp với PikPak (rclone)", command=self.check_mapping).pack(side="left")
-        g.label(self.map_status, foreground=C_ACCENT, font=(FONT, 10, "bold"))
-        g.section("Cấu hình", "Ổ RaiDrive mount PikPak. Thư mục nguồn chọn trên ổ này được lưu không phụ thuộc ký tự "
-                              "ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
+        g.section("Cấu hình", "Ổ RaiDrive mount WebDAV PikPak của người chia sẻ. Thư mục nguồn chọn trên ổ này được lưu "
+                              "không phụ thuộc ký tự ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
         g.entry("Ổ RaiDrive", self.rd_var, self._browse_rd, width=14)
-        g.entry("Thư mục PikPak tương ứng gốc ổ", self.rdbase_var,
-                hint="Thường để TRỐNG (gốc ổ = gốc PikPak). Nút \"Kiểm tra khớp\" tự đoán giúp nếu ổ mount 1 thư mục con.")
         g.spin("Tự kiểm tra ổ mỗi (phút, 0 = tắt)", self.rdmin_var, 0, 60)
 
         # ----- 4. rclone
@@ -5242,7 +5213,9 @@ class App(tk.Tk):
                     continue
                 self.q.put(("upload", code, "uploading", "↑  0%"))
                 flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                p = subprocess.Popen([r, "--config", str(RCLONE_CONF), "copy", path, dest,
+                bw = str(self.cfg.get("bwlimit", "") or "").strip()
+                p = subprocess.Popen([r, "--config", str(RCLONE_CONF), "copyto", path, f"{dest}/{os.path.basename(path)}",
+                                      *(["--bwlimit", bw] if bw else []),
                                       "--retries", "3", "--low-level-retries", "10",
                                       "--stats", "2s", "--stats-one-line", "--stats-log-level", "NOTICE"],
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -5272,6 +5245,12 @@ class App(tk.Tk):
         h["upload_msg"] = info
         if self.hist_tree.exists(code):
             self.hist_tree.set(code, "pikpak", self._upload_text(h))
+        if self.scan_tree.exists(code):
+            if state == "uploading":
+                self._set_row(code, "✔  HDD  ·  " + str(info).strip(), "dl")
+            elif state in ("done", "error"):
+                self._set_row(code, "✔  Xong · HDD · My PikPak" if state == "done" else "✔  HDD  ·  ⚠ lỗi lưu PikPak",
+                              "done" if state == "done" else "err")
         if state == "done":
             h["upload_ts"] = time.time()
             self.log(f"☁ Đã lưu vào My PikPak: {h.get('name', '')}  →  {info}")
@@ -5355,13 +5334,10 @@ class App(tk.Tk):
             rd = self.rd_var.get().strip()
             self.cfg["raidrive_root"] = (rd[:2] + os.sep) if len(rd) == 2 and rd[1] == ":" else rd
             self.cfg["rd_remote_base"] = pikpak_join(self.rdbase_var.get())
-            self.cfg["dl_method"] = next((k for k, v in DL_METHODS.items() if v == self.method_var.get()), "auto")
+            self.cfg["dl_method"] = "copy"
             self.cfg["extensions"] = self.ext_var.get().strip()
             self.cfg["bwlimit"] = re.sub(r"\s+", "", self.bw_var.get())
-            try:
-                self.cfg["copy_threads"] = max(1, min(16, int(self.thr_var.get())))
-            except (tk.TclError, ValueError):
-                self.cfg["copy_threads"] = 4
+            self.cfg["copy_threads"] = 1
             try:
                 self.cfg["rd_check_min"] = max(0, int(self.rdmin_var.get()))
             except (tk.TclError, ValueError):
