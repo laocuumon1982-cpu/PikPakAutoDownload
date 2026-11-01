@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v2.1 by Duy Anh
+PikPak Auto Download v2.2 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v2.1 by Duy Anh"
+APP_VERSION = "v2.2 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -530,6 +530,19 @@ def download_rclone(progress=None):
     except OSError:
         pass
     return str(RCLONE_EXE)
+
+
+def rclone_conf_user(remote="pikpak"):
+    """Tài khoản PikPak đang lưu trong rclone.conf (mục [remote], dòng user = ...)."""
+    try:
+        txt = RCLONE_CONF.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    m = re.search(r"^\[" + re.escape(remote) + r"\]\s*$(.*?)(?=^\[|\Z)", txt, re.M | re.S)
+    if not m:
+        return ""
+    u = re.search(r"^\s*user\s*=\s*(.+?)\s*$", m.group(1), re.M)
+    return u.group(1) if u else ""
 
 
 def run_rclone(rclone, args, timeout=60):
@@ -1035,11 +1048,14 @@ def rclone_copy(rclone, src, dst, progress=None, stop=None, extra=()):
     return rc == 0, (" | ".join(x for x in tail if x)[-240:] if rc else "")
 
 
+FAST_COPY_STATE = {}          # "broken": ổ RaiDrive không cho đọc song song (tự chuyển 1 luồng tới khi mở lại tool)
+
+
 def fast_copy(src, dst, progress=None, stop=None, threads=4, block=8 << 20):
     """Copy nhanh từ ổ RaiDrive: chia file thành nhiều đoạn, mỗi đoạn 1 luồng đọc song song
     (ổ mạng WebDAV đọc 1 luồng thường chậm). File nhỏ / 1 luồng -> copy thường có tải tiếp."""
     total = os.path.getsize(src)
-    if threads <= 1 or total < 64 << 20:
+    if threads <= 1 or total < 64 << 20 or FAST_COPY_STATE.get("broken"):
         return copy_with_progress(src, dst, progress, stop, chunk=16 << 20)
     part = dst + ".part"
     with open(part, "wb") as fo:
@@ -1065,7 +1081,7 @@ def fast_copy(src, dst, progress=None, stop=None, threads=4, block=8 << 20):
                     pos += len(d)
                     done[i] = pos - a
         except Exception as e:
-            errs.append(e)
+            errs.append(f"luồng {i + 1} (byte {a:,}-{b:,}): {type(e).__name__}: {e}")
     ths = [threading.Thread(target=work, args=(i,), daemon=True) for i in range(threads)]
     t0 = time.time()
     for t in ths:
@@ -1082,7 +1098,11 @@ def fast_copy(src, dst, progress=None, stop=None, threads=4, block=8 << 20):
             os.remove(part)
         except OSError:
             pass
-        return False, f"Copy đa luồng lỗi: {errs[0]}"
+        FAST_COPY_STATE["broken"] = True       # ổ không đọc song song được -> các file sau copy 1 luồng
+        if progress:
+            progress(0, "copy 1 luồng...")
+        ok, msg = copy_with_progress(src, dst, progress, stop, chunk=16 << 20)
+        return ok, (msg if ok else f"Copy đa luồng lỗi ({errs[0]}); copy 1 luồng cũng lỗi: {msg}")
     os.replace(part, dst)
     try:
         st = os.stat(src)
@@ -1094,6 +1114,13 @@ def fast_copy(src, dst, progress=None, stop=None, threads=4, block=8 << 20):
 
 def copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
     """Copy file từ ổ RaiDrive về máy, tải tiếp được (file .part), báo % tiến độ."""
+    try:
+        return _copy_with_progress(src, dst, progress, stop, chunk)
+    except OSError as e:
+        return False, f"{type(e).__name__}: {e}"
+
+
+def _copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
     total = os.path.getsize(src)
     part = dst + ".part"
     done = os.path.getsize(part) if os.path.isfile(part) else 0
@@ -3010,6 +3037,19 @@ class App(tk.Tk):
         """Tải lần lượt từng file: về máy -> kiểm tra dung lượng -> copy sang HDD -> lưu vào My PikPak."""
         self.q.put(("progress", 0, len(items)))
         ok_names, bad = [], 0
+        self._remote_ok = {}
+        r = find_rclone()
+        for fc in {it[4] for it in items}:
+            f = next((x for x in cfg["folders"] if fid(x) == fc), None)
+            src = resolve_src(cfg, (f or {}).get("url", ""))
+            rem = remote_of(cfg, src) if (r and src and not is_share(src)) else None
+            if rem:
+                code_, out, err = run_rclone(r, ["lsf", rem, "--max-depth", "1", "--dirs-only"], 90)
+                self._remote_ok[fc] = code_ == 0
+                if code_ != 0:
+                    self.log(f"[{(f or {}).get('name', '')}] rclone không thấy thư mục nguồn trên tài khoản PikPak đang "
+                             "kết nối (ổ RaiDrive là tài khoản khác?) → copy từ ổ RaiDrive, lưu My PikPak bằng cách "
+                             "upload từ file đã copy về HDD.")
         for i, item in enumerate(items, 1):
             if self.stop_flag.is_set():
                 break
@@ -3198,6 +3238,8 @@ class App(tk.Tk):
         pk_thread, pk_res = None, {}
         if not meta.get("share"):
             src_remote = remote_of(cfg, meta.get("path")) if rclone else None
+            if src_remote and getattr(self, "_remote_ok", {}).get(folder_code) is False:
+                src_remote = None                  # tài khoản khác: không sao chép trên máy chủ được
             if pk_dir and src_remote:
                 # lưu My PikPak bằng rclone (sao chép trên máy chủ) CHẠY SONG SONG với copy về HDD
                 target = f"{remote}:{pikpak_join(pk_dir, name)}"
@@ -3268,6 +3310,16 @@ class App(tk.Tk):
             elif not self.stop_flag.is_set():
                 self.log(f"⚠ [{name}] Lưu My PikPak lỗi: {pk_res.get('msg', '')[:160]} - sẽ thử lại bằng hàng chờ.")
                 self.report_error(f"Lưu My PikPak lỗi: {name}", pk_res.get("msg", ""), item=item)
+        if pk_dir and not saved and not meta.get("share") and not src_remote and not hdd_dir and rclone \
+                and meta.get("path") and os.path.isfile(meta["path"]):
+            target = f"{remote}:{pikpak_join(pk_dir, name)}"
+            self.q.put(("rowstatus", fcode, "☁  Đang upload lên My PikPak...", "dl"))
+            ok_up, msg_up = rclone_copy(rclone, meta["path"], target, lambda p, sp="": self.q.put(
+                ("rowstatus", fcode, f"☁  ↑ {p:>3}%  {sp}", "dl")), self.stop_flag, extra)
+            if ok_up:
+                saved = target
+            else:
+                self.report_error(f"Upload My PikPak lỗi: {name}", msg_up, item=item)
         if not hdd_dir and pk_dir and not saved:
             self._fetch_fail(item, STATUS_FAIL, "Không lưu được vào My PikPak")
             return False
@@ -3275,7 +3327,7 @@ class App(tk.Tk):
         if saved:
             rec.update(upload="done", upload_msg=saved, upload_ts=time.time())
         elif pk_dir:
-            rec.update(upload="", remote_src=src_remote or "")
+            rec.update(upload="", remote_src=src_remote or "")   # không có remote_src -> upload từ file HDD
         else:
             rec["upload"] = "skip"
         self.q.put(("hist", fcode, dict(rec)))
@@ -4439,6 +4491,7 @@ class App(tk.Tk):
                 except Exception:
                     pass
             user, pw = cfg.get("pikpak_user", ""), dec_secret(cfg.get("pikpak_pass", ""))
+            user = user or rclone_conf_user(remote)
             if not conf_ok and user and pw:
                 code, out, err = run_rclone(r, ["config", "create", remote, "pikpak", "user", user, "pass", pw,
                                                 "--obscure", "--non-interactive"], 60)

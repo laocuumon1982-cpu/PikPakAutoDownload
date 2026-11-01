@@ -1,6 +1,13 @@
 PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.2  (01/11/2026)
+  - Sửa: copy đa luồng từ ổ RaiDrive lỗi "[Errno 2] No such file or directory" (RaiDrive không cho đọc song song)
+    -> tự chuyển sang copy 1 luồng ngay, các file sau cũng copy 1 luồng.
+  - Sửa: rclone báo "directory not found" khi ổ RaiDrive là tài khoản PikPak khác tài khoản My PikPak -> tool
+    kiểm tra trước, không dùng sao chép trên máy chủ nữa mà upload bản đã copy về HDD lên My PikPak (chạy nền).
+  - Tab My PikPak hiện tài khoản đang lưu trong rclone.conf. Báo cáo lỗi ghi rõ luồng / đoạn byte bị lỗi.
+
 v2.1  (01/11/2026)
   - Copy về HDD thẳng từ ổ RaiDrive, đọc NHIỀU LUỒNG song song (mặc định 4, chỉnh trong Cài đặt -> Chung);
     lỗi thì tự chuyển sang rclone. Save My PikPak bằng rclone (sao chép trên máy chủ) chạy SONG SONG với copy HDD.

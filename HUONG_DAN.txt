@@ -1,4 +1,4 @@
-PIKPAK AUTO DOWNLOAD v2.1 by Duy Anh - HƯỚNG DẪN
+PIKPAK AUTO DOWNLOAD v2.2 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
@@ -21,6 +21,11 @@ LẦN ĐẦU
    5. "Quét file" -> tích những tập ĐÃ CÓ -> "Thêm vào Danh sách đã có" -> "Lưu" (để không tải lại tập cũ).
    6. Bấm "⬇ Tải mới" ở thẻ thư mục (chỉ thư mục đó) hoặc tab Quét & Tải -> "Quét & Tải" (tất cả).
       Hoặc bật "Tự quét mỗi 60 phút" ở thanh bên trái.
+
+Ổ RAIDRIVE LÀ TÀI KHOẢN PIKPAK KHÁC (VD "PikPak - Thúng")
+   rclone (tài khoản My PikPak) không thấy thư mục trên ổ đó -> không sao chép trên máy chủ được. Tool tự nhận ra:
+   copy từ ổ RaiDrive về HDD, rồi upload bản trên HDD lên My PikPak (chạy nền, song song với file kế tiếp).
+   Nếu RaiDrive không cho đọc nhiều luồng, tool tự chuyển sang copy 1 luồng.
 
 NGUỒN CÓ NHIỀU PHIM
    Tool tự tách tên phim: theo thư mục con cấp 1, không có thì theo tên file (bỏ số tập, [tag]):
