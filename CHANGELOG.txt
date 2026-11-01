@@ -1,6 +1,16 @@
 PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.1  (01/11/2026)
+  - Copy về HDD thẳng từ ổ RaiDrive, đọc NHIỀU LUỒNG song song (mặc định 4, chỉnh trong Cài đặt -> Chung);
+    lỗi thì tự chuyển sang rclone. Save My PikPak bằng rclone (sao chép trên máy chủ) chạy SONG SONG với copy HDD.
+    rclone tải nhanh hơn (8 luồng / file, bộ đệm 32M, bỏ liệt kê thư mục đích).
+  - Cài đặt thêm tab rclone: trạng thái, phiên bản, cấu hình PikPak, tải lại / cập nhật. Không có rclone.exe thì
+    tool TỰ tải về (không hỏi).
+  - Báo cáo lỗi: mỗi lỗi ghi 1 file Data\BaoLoi\BaoLoi_*.txt (có traceback, cấu hình đã bỏ mật khẩu, nhật ký);
+    thanh bên hiện dòng đỏ bấm để copy dán vào Claude; tab Lịch sử có nút Copy báo cáo / Thư mục báo cáo.
+  - Bỏ dòng chữ "Kéo mép phải thanh này..." ở thanh bên.
+
 v2.0  (01/11/2026)
   - Đổi cách hoạt động: mỗi thư mục phim tự có Nguồn (link chia sẻ PikPak / ổ RaiDrive), Tên phim, Ghi chú,
     Đích HDD (copy) và Đích My PikPak (save), xem trước đường dẫn đích. Tải thẳng về thư mục HDD.
