@@ -1,4 +1,4 @@
-# Tự đóng gói và tạo bản phát hành (Release) cho PikPak Auto Download.
+# Tự đóng gói và tạo bản phát hành (Release) cho Auto Download - PikPak.
 # - Mỗi lần pikpak_auto_download.py trên nhánh main đổi APP_VERSION (VD v6.2) -> tự tạo Release v6.2.
 # - Hoặc tự tạo Release trên GitHub (tag vX.Y) -> tự đính kèm file.
 # Nút "⟳ Cập nhật" trong tool tải PikPakAutoDownload_Portable.zip (bản exe)
@@ -61,7 +61,7 @@ jobs:
         with:
           tag_name: ${{ env.VER }}
           target_commitish: ${{ github.sha }}
-          name: PikPak Auto Download ${{ env.VER }}
+          name: Auto Download - PikPak ${{ env.VER }}
           body: "Bản exe: PikPakAutoDownload_Portable.zip · Bản Python: PikPakAutoDownload_${{ env.VER }}.zip · Thay đổi: xem CHANGELOG.txt"
           files: |
             PikPakAutoDownload_Portable.zip

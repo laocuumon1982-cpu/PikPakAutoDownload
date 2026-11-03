@@ -1,5 +1,9 @@
-PIKPAK AUTO DOWNLOAD by Duy Anh - NHẬT KÝ PHIÊN BẢN
+AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
+
+v2.5  (03/11/2026)
+  - Đổi tên tool thành "Auto Download - PikPak" (tiêu đề cửa sổ, thanh bên, khay hệ thống, hướng dẫn).
+  - Giữ nguyên thư mục Data, mật khẩu đã lưu, tên file exe và kho GitHub để cập nhật tự động vẫn chạy bình thường.
 
 v2.4  (02/11/2026)
   - File copy bị lỗi giữa chừng (VD RaiDrive rớt: FileNotFoundError [Errno 2]) hoặc thiếu dung lượng: tool tự

@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-title Dong goi PikPak Auto Download Portable
+title Dong goi Auto Download - PikPak Portable
 echo ==========================================================
-echo   DONG GOI PIKPAK AUTO DOWNLOAD THANH BAN PORTABLE (.exe)
+echo   DONG GOI AUTO DOWNLOAD - PIKPAK THANH BAN PORTABLE (.exe)
 echo ==========================================================
 echo.
 echo [1/4] Cai thu vien can thiet...

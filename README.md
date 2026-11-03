@@ -1,4 +1,4 @@
-# PikPak Auto Download
+# Auto Download - PikPak
 
 Tool Windows (Tkinter) quét thư mục phim cập nhật hằng ngày trên PikPak (ổ RaiDrive mount WebDAV, hoặc link chia sẻ PikPak), tải tập mới về máy bằng rclone, copy 1 bản sang ổ HDD theo tên phim và lưu 1 bản vào My PikPak. Cùng nguyên lý với [Fshare Auto Download](https://github.com/laocuumon1982-cpu/FshareAutoDownload).
 

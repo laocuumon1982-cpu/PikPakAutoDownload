@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PikPak Auto Download v2.4 by Duy Anh
+Auto Download - PikPak v2.5 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -40,8 +40,8 @@ except Exception:
     pystray = PILImage = None
     TRAY_OK = False
 
-APP_TITLE = "PikPak Auto Download"
-APP_VERSION = "v2.4 by Duy Anh"
+APP_TITLE = "Auto Download - PikPak"
+APP_VERSION = "v2.5 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -1292,7 +1292,7 @@ def stage_update(zip_path):
             root = Path(cur)
             break
     if root is None:
-        raise RuntimeError("File zip không phải bản PikPak Auto Download (không thấy pikpak_auto_download.py / .exe).")
+        raise RuntimeError("File zip không phải bản Auto Download - PikPak (không thấy pikpak_auto_download.py / .exe).")
     frozen = getattr(sys, "frozen", False)
     new_ver = file_version(root / "pikpak_auto_download.py") if (root / "pikpak_auto_download.py").is_file() else ""
     has_exe = (root / "PikPakAutoDownload.exe").is_file() or (root / exe_name).is_file()
@@ -5561,7 +5561,7 @@ class App(tk.Tk):
             img = PILImage.open(io.BytesIO(base64.b64decode(ICON64)))
             put = lambda what: (lambda: self.q.put(("tray", what)))
             menu = pystray.Menu(
-                pystray.MenuItem("Mở PikPak Auto Download", put("show"), default=True),
+                pystray.MenuItem("Mở Auto Download - PikPak", put("show"), default=True),
                 pystray.MenuItem("Quét & Tải ngay", put("scan")),
                 pystray.MenuItem(lambda item: "Tắt tự quét" if self.cfg.get("auto_scan") else "Bật tự quét",
                                  put("toggle_auto")),
