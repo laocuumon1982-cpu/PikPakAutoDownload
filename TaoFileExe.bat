@@ -11,11 +11,11 @@ python -m pip install --upgrade requests pystray pillow pyinstaller
 if errorlevel 1 goto :loi
 echo.
 echo [2/4] Dong goi file exe (mat 1-3 phut)...
-python -m PyInstaller --noconfirm --clean --onefile --noconsole --name PikPakAutoDownload --icon icon.ico --add-data "icon.ico;." --hidden-import pystray._win32 pikpak_auto_download.py
+python -m PyInstaller --noconfirm --clean --onefile --noconsole --name "Auto Download - PikPak" --icon icon.ico --add-data "icon.ico;." --hidden-import pystray._win32 pikpak_auto_download.py
 if errorlevel 1 goto :loi
 set OUT=PikPakAutoDownload_Portable
 if not exist "%OUT%" mkdir "%OUT%"
-copy /y "dist\PikPakAutoDownload.exe" "%OUT%\" >nul
+copy /y "dist\Auto Download - PikPak.exe" "%OUT%\" >nul
 copy /y "HUONG_DAN.txt" "%OUT%\" >nul
 copy /y "CHANGELOG.txt" "%OUT%\" >nul
 if exist "HUONG_DAN_CAP_NHAT.txt" copy /y "HUONG_DAN_CAP_NHAT.txt" "%OUT%\" >nul
@@ -38,7 +38,7 @@ if exist "%OUT%\rclone.exe" (
 echo.
 echo [4/4] XONG!
 echo   Ban portable nam trong thu muc: %OUT%
-echo   Chep CA THU MUC %OUT% sang o cung di dong, chay PikPakAutoDownload.exe.
+echo   Chep CA THU MUC %OUT% sang o cung di dong, chay "Auto Download - PikPak.exe".
 echo   Khong can cai Python tren may khac.
 echo.
 pause

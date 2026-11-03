@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v2.5 by Duy Anh
+Auto Download - PikPak v2.6 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v2.5 by Duy Anh"
+APP_VERSION = "v2.6 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -74,6 +74,8 @@ OWNED_FILE = DATA_DIR / "owned.json"        # Danh sách đã có (không tải)
 RCLONE_CONF = DATA_DIR / "rclone.conf"      # cấu hình rclone (đăng nhập PikPak) -> đi theo thư mục Data
 BACKUP_FILES = ("config.json", "owned.json", "history.json")
 BACKUP_DIR = "_Backup PikPakAutoDownload"
+EXE_NAME = "Auto Download - PikPak.exe"          # tên file exe (từ v2.6)
+OLD_EXE_NAMES = ("PikPakAutoDownload.exe",)       # tên exe cũ (<= v2.5)
 MACHINE = (os.environ.get("COMPUTERNAME") or "").strip() or __import__("socket").gethostname()
 PATH_KEYS = ("raidrive_root",)
 MACHINE_KEYS = PATH_KEYS + ("rd_remote_base", "start_with_windows")
@@ -1284,20 +1286,22 @@ def stage_update(zip_path):
             if n.startswith("/") or ".." in Path(n).parts:
                 raise RuntimeError("File cập nhật không hợp lệ")
         z.extractall(tmp)
-    exe_name = Path(sys.executable).name if getattr(sys, "frozen", False) else "PikPakAutoDownload.exe"
+    exe_name = Path(sys.executable).name if getattr(sys, "frozen", False) else EXE_NAME
+    exe_names = {exe_name, EXE_NAME, *OLD_EXE_NAMES}
     root = None
     for cur, dirs, files in os.walk(tmp):
         dirs[:] = [d for d in dirs if d.lower() not in UPDATE_SKIP]
-        if "pikpak_auto_download.py" in files or exe_name in files or "PikPakAutoDownload.exe" in files:
+        if "pikpak_auto_download.py" in files or exe_names & set(files):
             root = Path(cur)
             break
     if root is None:
         raise RuntimeError("File zip không phải bản Auto Download - PikPak (không thấy pikpak_auto_download.py / .exe).")
     frozen = getattr(sys, "frozen", False)
     new_ver = file_version(root / "pikpak_auto_download.py") if (root / "pikpak_auto_download.py").is_file() else ""
-    has_exe = (root / "PikPakAutoDownload.exe").is_file() or (root / exe_name).is_file()
+    new_exe = next((root / n for n in (exe_name, EXE_NAME, *OLD_EXE_NAMES) if (root / n).is_file()), None)
+    has_exe = new_exe is not None
     if frozen and not has_exe and not new_ver:
-        raise RuntimeError("Bản cập nhật không có PikPakAutoDownload.exe hay pikpak_auto_download.py.")
+        raise RuntimeError("Bản cập nhật không có file exe hay pikpak_auto_download.py.")
     old_dir = BASE / "_BanCu"
     old_dir.mkdir(exist_ok=True)
     cur_py = BASE / "pikpak_auto_download.py"
@@ -1310,13 +1314,50 @@ def stage_update(zip_path):
         dest = BASE / item.name
         if item.is_dir():
             shutil.copytree(item, dest, dirs_exist_ok=True)
-        elif frozen and item.name in (exe_name, "PikPakAutoDownload.exe"):
+        elif frozen and item.name == exe_name:   # exe đang chạy -> thay sau khi tool thoát
             pending_exe = BASE / (exe_name + ".new")
             shutil.copy2(item, pending_exe)
         else:
             shutil.copy2(item, dest)
     shutil.rmtree(tmp, ignore_errors=True)
     return new_ver, pending_exe
+
+
+def migrate_exe_name():
+    """Đổi tên exe PikPakAutoDownload.exe -> "Auto Download - PikPak.exe".
+    Exe cũ (tên cũ) chạy code mới (pikpak_auto_download.py cạnh exe) -> nếu cạnh đó đã có exe tên mới
+    thì mở exe tên mới rồi thoát. Exe tên mới khi chạy sẽ cất exe cũ vào _BanCu."""
+    if not getattr(sys, "frozen", False):
+        return
+    me = Path(sys.executable)
+    new = BASE / EXE_NAME
+    if me.name in OLD_EXE_NAMES and new.is_file() and me.resolve() != new.resolve():
+        args = [a for a in sys.argv[1:] if a != "--embedded"]
+        subprocess.Popen([str(new)] + args, cwd=str(BASE), env=clean_env(), close_fds=True)
+        os._exit(0)
+    if me.name == EXE_NAME:
+        olds = [BASE / n for n in OLD_EXE_NAMES if (BASE / n).is_file()]
+        if not olds:
+            return
+
+        def _stash():
+            dest_dir = BASE / "_BanCu"
+            for _ in range(30):           # chờ exe cũ thoát hẳn
+                left = []
+                for o in olds:
+                    try:
+                        dest_dir.mkdir(exist_ok=True)
+                        d = dest_dir / o.name
+                        if d.exists():
+                            d.unlink()
+                        shutil.move(str(o), str(d))
+                    except OSError:
+                        left.append(o)
+                olds[:] = left
+                if not olds:
+                    return
+                time.sleep(2)
+        threading.Thread(target=_stash, daemon=True).start()
 
 
 def clean_env():
@@ -5739,5 +5780,6 @@ if __name__ == "__main__":
             pass
     if "--after-update" in sys.argv:
         time.sleep(2.5)           # chờ bản cũ thoát hẳn
+    migrate_exe_name()
     if not run_newer_script():
         App(auto="--auto" in sys.argv, startup="--startup" in sys.argv).mainloop()
