@@ -1,6 +1,11 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.7  (04/11/2026)
+  - Mỗi tập tải xong tự copy thêm 1 bản vào thư mục COPY TO IPHONE
+    (mặc định C:\Users\<tên>\Downloads\Video\COPY TO IPHONE). Bật/tắt và nút "Chọn..." đổi thư mục ở
+    Cài đặt > Chung > Copy & Save. Copy lỗi chỉ báo lỗi, không làm hỏng tập đã tải.
+
 v2.6  (03/11/2026)
   - Đổi tên file exe thành "Auto Download - PikPak.exe".
   - Bản exe cũ (PikPakAutoDownload.exe) bấm "Cập nhật" sẽ tự chuyển sang exe tên mới, exe cũ được cất vào
