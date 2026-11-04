@@ -1,6 +1,15 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v3.1  (04/11/2026)
+  - Thêm GIAO DIỆN MỚI (mặc định): tông trắng · cam · xanh dương, bố cục khác hẳn bản cũ:
+    · thanh tiêu đề xanh dương với menu ngang (Thư mục phim · Quét & Tải · Lịch sử · Cài đặt), vạch cam;
+    · dải trạng thái trắng ngay dưới: Thư viện · RaiDrive · My PikPak · Tự động · Quét lần cuối · Sao lưu;
+    · cảnh báo / báo cáo lỗi hiện thành dải riêng; nội dung dùng toàn bộ chiều rộng cửa sổ;
+    · thanh năng lượng: tải về màu cam, My PikPak màu xanh dương.
+  - Nút "◐ Giao diện" trên thanh tiêu đề (và Cài đặt > Chung > Giao diện) để chọn giao diện mới hoặc
+    quay lại giao diện cũ (tím, thanh bên trái). Đổi xong tool tự khởi động lại, dữ liệu giữ nguyên.
+
 v3.0  (04/11/2026)
   - Sửa lỗi không tự thu nhỏ cửa sổ RaiDrive xuống khay:
     · nhận đúng tiến trình ứng dụng RaiDrive (bỏ qua dịch vụ RaiDrive.Service), tìm cả theo tiêu đề cửa sổ;

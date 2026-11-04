@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v3.0 by Duy Anh
+Auto Download - PikPak v3.1 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v3.0 by Duy Anh"
+APP_VERSION = "v3.1 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -133,6 +133,58 @@ SIDE_W_MINI = 64      # thanh bên trái (thu gọn)
 SIDE_MIN, SIDE_MAX = 240, 700   # giới hạn khi kéo đổi độ rộng
 C_SIDE_TEXT = "#f2efff"
 C_SIDE_MUTED = "#b4a9e8"
+# màu phụ (đổi theo giao diện)
+C_BTN_HOVER = "#ece8ff"
+C_DIS_TEXT = "#a8aec4"
+C_DANGER_BG, C_DANGER_BORDER, C_DANGER_HOVER, C_DANGER_DIS = "#fdecec", "#f8c4c4", "#fbd5d5", "#e6a3a3"
+C_TROUGH = "#e4e0fb"
+C_SCROLL_ACT = "#d3d0f0"
+C_SKIP = "#9aa1b8"
+C_SIDE_OK, C_SIDE_BAD = "#86efac", "#fca5a5"
+C_ERR_BG, C_ERR_FG = "#7a1f4a", "#ffd6e0"
+C_FOOT = "#9d90de"
+C_LOG_BG, C_LOG_FG = "#1b1640", "#b9f6dc"
+C_CHECK_BORDER = "#b8bdd4"
+C_GLYPH = "#c3bdf0"
+ENERGY_EMPTY = "#e9e6fb"
+ENERGY_SETS = {}              # màu riêng cho từng thanh (dl / up / all); trống = dùng ENERGY_COLORS
+
+# ----- 2 giao diện: "pro" (mới - trắng · cam · xanh dương, menu ngang) / "classic" (cũ - tím, thanh bên trái)
+THEMES = {
+    "classic": {},           # = các giá trị ở trên
+    "pro": {
+        "C_BG": "#f4f6fa", "C_CARD": "#ffffff", "C_PANEL": "#f8fafc", "C_FIELD": "#ffffff",
+        "C_ACCENT": "#f97316", "C_ACCENT_HOVER": "#ea580c", "C_ACCENT_DIS": "#fed7aa", "C_ON_ACCENT": "#ffffff",
+        "C_SOFT": "#fff7ed", "C_SOFT_BORDER": "#fed7aa", "C_SEL": "#dbeafe", "C_HEAD": "#f1f5f9",
+        "C_ODD": "#fafbfd", "C_TEXT": "#0f172a", "C_MUTED": "#64748b", "C_BORDER": "#e2e8f0",
+        "C_GREEN": "#16a34a", "C_ORANGE": "#f97316", "C_RED": "#dc2626", "C_BLUE": "#2563eb",
+        "C_WARN_BG": "#fff7ed",
+        "C_SIDE": "#0b3a8c", "C_SIDE_CARD": "#134aa8", "C_SIDE_HOVER": "#1a55bd", "C_SIDE_ACTIVE": "#fb923c",
+        "C_SIDE_TEXT": "#dbe6fb", "C_SIDE_MUTED": "#9db5e3",
+        "C_BTN_HOVER": "#eff6ff", "C_DIS_TEXT": "#a0aec0",
+        "C_DANGER_BG": "#fef2f2", "C_DANGER_BORDER": "#fecaca", "C_DANGER_HOVER": "#fee2e2", "C_DANGER_DIS": "#f0b4b4",
+        "C_TROUGH": "#e2e8f0", "C_SCROLL_ACT": "#cbd5e1", "C_SKIP": "#94a3b8",
+        "C_SIDE_OK": "#16a34a", "C_SIDE_BAD": "#dc2626", "C_ERR_BG": "#fef2f2", "C_ERR_FG": "#b91c1c",
+        "C_FOOT": "#94a3b8", "C_LOG_BG": "#0f1e3d", "C_LOG_FG": "#cfe3ff", "C_CHECK_BORDER": "#cbd5e1",
+        "C_GLYPH": "#cbd5e1", "ENERGY_EMPTY": "#e8edf5",
+        "ENERGY_COLORS": ("#fdba74", "#fb923c", "#f97316", "#ea580c"),
+        "ENERGY_SETS": {"dl": ("#fdba74", "#fb923c", "#f97316", "#ea580c"),
+                        "up": ("#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"),
+                        "all": ("#fb923c", "#f97316", "#ea580c", "#c2410c")},
+    },
+}
+THEME_NAMES = {"pro": "Giao diện mới  (trắng · cam · xanh dương, menu ngang)",
+               "classic": "Giao diện cũ  (tím, thanh bên trái)"}
+UI_THEME = "classic"
+
+
+def apply_theme(name):
+    """Đổi bảng màu toàn cục (gọi trước khi dựng giao diện)."""
+    global UI_THEME
+    name = name if name in THEMES else "pro"
+    globals().update(THEMES[name])
+    UI_THEME = name
+    return name
 FONT = "Segoe UI"
 MONO = "Consolas"             # số liệu kiểu màn hình máy
 
@@ -1605,9 +1657,9 @@ ENERGY_COLORS = ("#8b5cf6", "#6366f1", "#0ea5e9", "#06b6d4", "#10b981", "#22c55e
 
 class EnergyBar(tk.Canvas):
     """Thanh năng lượng chia ô, tô màu chuyển tím -> xanh dương -> xanh lá theo %."""
-    def __init__(self, parent, bg, height=18, seg=36, empty="#e9e6fb", colors=ENERGY_COLORS):
+    def __init__(self, parent, bg, height=18, seg=36, empty=None, colors=None):
         super().__init__(parent, bg=bg, height=height, highlightthickness=0, bd=0)
-        self.seg, self.empty, self.colors, self.pct = seg, empty, colors, 0
+        self.seg, self.empty, self.colors, self.pct = seg, empty or ENERGY_EMPTY, colors or ENERGY_COLORS, 0
         self.bind("<Configure>", lambda e: self._draw())
 
     def _color(self, t):
@@ -1648,6 +1700,11 @@ class EnergyBar(tk.Canvas):
 class App(tk.Tk):
     def __init__(self, auto=False, startup=False):
         super().__init__()
+        try:
+            _disk = load_json(CONFIG_FILE, {})
+        except Exception:
+            _disk = {}
+        self.layout = apply_theme((_disk or {}).get("ui_theme", "pro") if isinstance(_disk, dict) else "pro")
         self.title(APP_NAME)
         self.geometry(f"{min(1480, max(1100, self.winfo_screenwidth() - 60))}x800")
         self._normal_geom = None
@@ -1703,22 +1760,19 @@ class App(tk.Tk):
         self._style()
         self._install_edit_bindings()
         self._make_check_images()
+        self.theme_var = tk.StringVar(value=self.layout)
         body = tk.Frame(self, bg=C_BG)
         body.pack(fill="both", expand=True)
-        main = tk.Frame(body, bg=C_BG)
-        self._build_header(main)
-        self._build_statusbar(main)
-        nb = ttk.Notebook(main, style="Side.TNotebook")
-        self.nb = nb
-        self.tab_scan = ttk.Frame(nb, style="Card.TFrame", padding=14)
-        self.tab_folders = ttk.Frame(nb, style="Card.TFrame", padding=14)
-        self.tab_settings = ttk.Frame(nb, style="Card.TFrame", padding=14)
-        self.tab_history = ttk.Frame(nb, style="Card.TFrame", padding=14)
-        for fr in (self.tab_scan, self.tab_folders, self.tab_history, self.tab_settings):
-            nb.add(fr)
-        self._build_sidebar(body)
-        main.pack(side="left", fill="both", expand=True)
-        nb.pack(fill="both", expand=True, padx=18, pady=(16, 0))
+        if self.layout == "pro":
+            self._build_pro_layout(body)
+        else:
+            main = tk.Frame(body, bg=C_BG)
+            self._build_header(main)
+            self._build_statusbar(main)
+            nb = self._make_notebook(main)
+            self._build_sidebar(body)
+            main.pack(side="left", fill="both", expand=True)
+            nb.pack(fill="both", expand=True, padx=18, pady=(16, 0))
 
         self._build_scan()
         self._build_folders()
@@ -1726,7 +1780,7 @@ class App(tk.Tk):
         self._build_history()
         self.select_page("folders" if not any(f.get("reviewed") for f in self.cfg["folders"]) else "scan")
         if self.cfg.get("last_summary"):
-            self.side_last.config(text="Quét lần cuối:\n" + self.cfg["last_summary"])
+            self._set_last(self.cfg["last_summary"])
         self.update_stats()
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -1856,8 +1910,8 @@ class App(tk.Tk):
         st.layout("Side.TNotebook.Tab", [])
         st.configure("TButton", padding=(12, 6), background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
                      lightcolor=C_PANEL, darkcolor=C_PANEL, borderwidth=1, focusthickness=0, font=(FONT, 10))
-        st.map("TButton", background=[("active", "#ece8ff"), ("disabled", C_CARD)],
-               foreground=[("disabled", "#a8aec4")], bordercolor=[("active", C_ACCENT)])
+        st.map("TButton", background=[("active", C_BTN_HOVER), ("disabled", C_CARD)],
+               foreground=[("disabled", C_DIS_TEXT)], bordercolor=[("active", C_ACCENT)])
         st.configure("Small.TButton", padding=(8, 4), font=(FONT, 9))
         for name, pad, fs in (("Accent.TButton", (14, 7), 10), ("AccentSmall.TButton", (10, 4), 9)):
             st.configure(name, background=C_ACCENT, foreground=C_ON_ACCENT, bordercolor=C_ACCENT,
@@ -1868,9 +1922,9 @@ class App(tk.Tk):
                      lightcolor=C_ACCENT, darkcolor=C_ACCENT, font=(FONT, 10, "bold"), padding=(16, 7))
         st.map("Success.TButton", background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)])
         for name, pad, fs in (("Danger.TButton", (12, 6), 10), ("DangerSmall.TButton", (8, 4), 9)):
-            st.configure(name, background="#fdecec", foreground=C_RED, bordercolor="#f8c4c4",
-                         lightcolor="#fdecec", darkcolor="#fdecec", padding=pad, font=(FONT, fs))
-            st.map(name, background=[("active", "#fbd5d5")], foreground=[("disabled", "#e6a3a3")])
+            st.configure(name, background=C_DANGER_BG, foreground=C_RED, bordercolor=C_DANGER_BORDER,
+                         lightcolor=C_DANGER_BG, darkcolor=C_DANGER_BG, padding=pad, font=(FONT, fs))
+            st.map(name, background=[("active", C_DANGER_HOVER)], foreground=[("disabled", C_DANGER_DIS)])
         for name, pad in (("TEntry", 6), ("TCombobox", 5), ("TSpinbox", 4)):
             st.configure(name, fieldbackground=C_FIELD, foreground=C_TEXT, bordercolor=C_BORDER,
                          lightcolor=C_FIELD, darkcolor=C_FIELD, padding=pad, arrowsize=12, insertcolor=C_ACCENT,
@@ -1887,16 +1941,16 @@ class App(tk.Tk):
         st.map("Pro.Treeview.Heading", background=[("active", C_PANEL)], foreground=[("active", C_ACCENT)])
         st.map("Pro.Treeview", background=[("selected", C_SEL)], foreground=[("selected", C_TEXT)])
         st.layout("Pro.Treeview", [("Treeview.treearea", {"sticky": "nswe"})])
-        st.configure("Pro.Horizontal.TProgressbar", troughcolor="#e4e0fb", background=C_ACCENT,
-                     bordercolor="#e4e0fb", lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=10)
+        st.configure("Pro.Horizontal.TProgressbar", troughcolor=C_TROUGH, background=C_ACCENT,
+                     bordercolor=C_TROUGH, lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=10)
         st.configure("Vertical.TScrollbar", background=C_PANEL, troughcolor=C_CARD, borderwidth=0, arrowsize=12,
                      bordercolor=C_CARD, lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED)
-        st.map("Vertical.TScrollbar", background=[("active", "#d3d0f0")])
+        st.map("Vertical.TScrollbar", background=[("active", C_SCROLL_ACT)])
         st.configure("TPanedwindow", background=C_CARD)
         st.configure("Sash", sashthickness=8, gripcount=0, background=C_BORDER)
         st.configure("TMenubutton", background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
                      lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED, padding=(10, 5))
-        st.map("TMenubutton", background=[("active", "#ece8ff")])
+        st.map("TMenubutton", background=[("active", C_BTN_HOVER)])
 
     def _tree(self, parent, cols, heads, widths, anchors=None, height=12, check=False, stretch=None):
         wrap = ttk.Frame(parent, style="Card.TFrame")
@@ -1921,8 +1975,195 @@ class App(tk.Tk):
         tree.tag_configure("dl", foreground=C_ORANGE)
         tree.tag_configure("done", foreground=C_GREEN)
         tree.tag_configure("err", foreground=C_RED)
-        tree.tag_configure("skip", foreground="#9aa1b8")
+        tree.tag_configure("skip", foreground=C_SKIP)
         return wrap, tree
+
+    def _make_notebook(self, parent):
+        nb = ttk.Notebook(parent, style="Side.TNotebook")
+        self.nb = nb
+        self.tab_scan = ttk.Frame(nb, style="Card.TFrame", padding=14)
+        self.tab_folders = ttk.Frame(nb, style="Card.TFrame", padding=14)
+        self.tab_settings = ttk.Frame(nb, style="Card.TFrame", padding=14)
+        self.tab_history = ttk.Frame(nb, style="Card.TFrame", padding=14)
+        for fr in (self.tab_scan, self.tab_folders, self.tab_history, self.tab_settings):
+            nb.add(fr)
+        return nb
+
+    NAV_ITEMS = (("folders", "▦", "Thư mục phim"), ("scan", "⬇", "Quét & Tải"),
+                 ("history", "☰", "Lịch sử tải"), ("settings", "⚙", "Cài đặt"))
+
+    def _build_pro_layout(self, body):
+        """Giao diện mới: thanh tiêu đề xanh dương + menu ngang, dải trạng thái trắng, nội dung toàn chiều rộng."""
+        hdr = tk.Frame(body, bg=C_SIDE)
+        hdr.pack(fill="x")
+        tk.Frame(body, bg=C_ACCENT, height=3).pack(fill="x")         # vạch cam dưới thanh tiêu đề
+        strip = tk.Frame(body, bg=C_CARD)
+        strip.pack(fill="x")
+        tk.Frame(body, bg=C_BORDER, height=1).pack(fill="x")
+        self.alerts = tk.Frame(body, bg=C_BG)
+        self.alerts.pack(fill="x", padx=18)
+        main = tk.Frame(body, bg=C_BG)
+        main.pack(fill="both", expand=True)
+        tr = tk.Frame(main, bg=C_BG)
+        tr.pack(fill="x", padx=24, pady=(14, 0))
+        self.top_title = tk.Label(tr, text="", bg=C_BG, fg=C_TEXT, font=(FONT, 16, "bold"), anchor="w")
+        self.top_title.pack(side="left")
+        self.top_sub = tk.Label(tr, text="", bg=C_BG, fg=C_MUTED, font=(FONT, 9), anchor="w")
+        self.top_sub.pack(side="left", padx=(14, 0), pady=(6, 0))
+        self._build_statusbar(main)
+        nb = self._make_notebook(main)
+        nb.pack(fill="both", expand=True, padx=18, pady=(10, 0))
+
+        # ----- thanh tiêu đề: logo + tên | menu ngang | cập nhật · giao diện · tự quét
+        inner = tk.Frame(hdr, bg=C_SIDE)
+        inner.pack(fill="x", padx=(18, 14))
+        brand = tk.Frame(inner, bg=C_SIDE)
+        brand.pack(side="left", pady=10)
+        if self.icon_small:
+            tk.Label(brand, image=self.icon_small, bg=C_SIDE).pack(side="left", padx=(0, 10))
+        bt = tk.Frame(brand, bg=C_SIDE)
+        bt.pack(side="left")
+        tk.Label(bt, text=APP_TITLE, bg=C_SIDE, fg="#ffffff", font=(FONT, 12, "bold")).pack(anchor="w")
+        tk.Label(bt, text=APP_VERSION, bg=C_SIDE, fg=C_SIDE_MUTED, font=(FONT, 8)).pack(anchor="w")
+        tk.Frame(inner, bg=C_SIDE_HOVER, width=1).pack(side="left", fill="y", padx=(22, 10), pady=12)
+        navf = tk.Frame(inner, bg=C_SIDE)
+        navf.pack(side="left", fill="y")
+        self.nav = {}
+        frames = {"folders": self.tab_folders, "scan": self.tab_scan, "history": self.tab_history,
+                  "settings": self.tab_settings}
+        for n, (key, icon, text) in enumerate(self.NAV_ITEMS, 1):
+            col = tk.Frame(navf, bg=C_SIDE, cursor="hand2")
+            col.pack(side="left", fill="y", padx=2)
+            bar = tk.Frame(col, bg=C_SIDE, height=3)
+            bar.pack(side="bottom", fill="x")
+            row = tk.Frame(col, bg=C_SIDE, padx=12)
+            row.pack(fill="both", expand=True)
+            ic = tk.Label(row, text=icon, bg=C_SIDE, fg=C_SIDE_MUTED, font=(FONT, 12))
+            ic.pack(side="left", padx=(0, 6))
+            lb = tk.Label(row, text=text, bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 10, "bold"))
+            lb.pack(side="left")
+            badge = tk.Label(row, text="", bg=C_ACCENT, fg=C_ON_ACCENT, font=(MONO, 8, "bold"), padx=6)
+            self.nav[key] = {"row": row, "bar": bar, "icon": ic, "label": lb, "badge": badge, "frame": frames[key],
+                             "col": col}
+            for w in (col, row, ic, lb, badge):
+                w.bind("<Button-1>", lambda e, k=key: self.select_page(k))
+                w.bind("<Enter>", lambda e, k=key: self._nav_hover(k, True))
+                w.bind("<Leave>", lambda e, k=key: self._nav_hover(k, False))
+            self.bind_all(f"<Control-Key-{n}>", lambda e, k=key: self.select_page(k))
+        right = tk.Frame(inner, bg=C_SIDE)
+        right.pack(side="right")
+        self.top_auto = tk.Label(right, text="", bg=C_SIDE_CARD, fg="#ffffff", font=(FONT, 9, "bold"),
+                                 padx=12, pady=6, cursor="hand2")
+        self.top_auto.pack(side="right")
+        self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("gen")))
+        self.top_theme = self._theme_button(right, C_SIDE, C_SIDE_TEXT, C_SIDE_HOVER)
+        self.top_theme.pack(side="right", padx=(0, 8))
+        self.top_upd = tk.Label(right, text="⟳  Cập nhật", bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 9, "bold"),
+                                padx=12, pady=6, cursor="hand2", highlightbackground=C_SIDE_HOVER,
+                                highlightthickness=1)
+        self.top_upd.pack(side="right", padx=(0, 8))
+        self.top_upd.bind("<Button-1>", lambda e: self.check_update(silent=False))
+        self.header_auto_text = ""
+
+        # ----- dải trạng thái: Thư viện · RaiDrive · PikPak · Tự động · Quét lần cuối · Sao lưu · Máy
+        si = tk.Frame(strip, bg=C_CARD, padx=22, pady=8)
+        si.pack(fill="x")
+
+        def chip(title, last=False):
+            f = tk.Frame(si, bg=C_CARD)
+            f.pack(side="left", padx=(0, 0 if last else 12), fill="y")
+            tk.Label(f, text=title, bg=C_CARD, fg=C_MUTED, font=(FONT, 7, "bold")).pack(anchor="w")
+            if not last:
+                tk.Frame(si, bg=C_BORDER, width=1).pack(side="left", fill="y", padx=(0, 12), pady=2)
+            return f
+        c = chip("THƯ VIỆN")
+        self.side_owned = tk.Label(c, text="", bg=C_CARD, fg=C_GREEN, font=(FONT, 10, "bold"), anchor="w")
+        self.side_owned.pack(anchor="w")
+        c = chip("RAIDRIVE")
+        self.side_rd = tk.Label(c, text="▣ RaiDrive: đang kiểm tra...", bg=C_CARD, fg=C_MUTED, font=(FONT, 9),
+                                anchor="w", justify="left", wraplength=240, cursor="hand2")
+        self.side_rd.pack(anchor="w")
+        self.side_rd.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("raidrive")))
+        c = chip("MY PIKPAK")
+        self.side_pk = tk.Label(c, text="☁ PikPak: đang kiểm tra...", bg=C_CARD, fg=C_MUTED, font=(FONT, 9),
+                                anchor="w", justify="left", wraplength=300, cursor="hand2")
+        self.side_pk.pack(anchor="w")
+        self.side_pk.bind("<Button-1>", lambda e: self.get_rclone() if not find_rclone() else (
+            self.select_page("settings"), self._settings_page("pikpak")))
+        c = chip("TỰ ĐỘNG")
+        r = tk.Frame(c, bg=C_CARD)
+        r.pack(anchor="w")
+        ttk.Checkbutton(r, text="Tự quét mỗi", variable=self.auto_var, command=self._auto_changed).pack(side="left")
+        cb = ttk.Combobox(r, textvariable=self.interval_var, values=INTERVAL_CHOICES, width=4, state="readonly")
+        cb.pack(side="left", padx=4)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._auto_changed())
+        tk.Label(r, text="phút", bg=C_CARD, fg=C_TEXT, font=(FONT, 9)).pack(side="left")
+        self.side_auto = tk.Label(r, text="", bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold"), anchor="w")
+        self.side_auto.pack(side="left", padx=(10, 0))
+        c = chip("QUÉT LẦN CUỐI")
+        self.side_last = tk.Label(c, text="Chưa quét lần nào", bg=C_CARD, fg=C_TEXT, font=(FONT, 9), anchor="w",
+                                  justify="left", wraplength=280)
+        self.side_last.pack(anchor="w")
+        c = chip("SAO LƯU · MÁY", last=True)
+        self.side_bk = tk.Label(c, text="", bg=C_CARD, fg=C_MUTED, font=(FONT, 9), anchor="w")
+        self.side_bk.pack(anchor="w")
+        if self.cfg.get("last_backup"):
+            self.side_bk.config(text="⟲ " + self.cfg["last_backup"])
+        tk.Label(c, text=f"⌂ {MACHINE}", bg=C_CARD, fg=C_MUTED, font=(FONT, 8), anchor="w").pack(anchor="w")
+        # cảnh báo (kiểm tra sức khỏe, báo cáo lỗi) - dải riêng dưới dải trạng thái
+        self.side_health = tk.Label(self.alerts, text="", bg=C_WARN_BG, fg=C_ORANGE, font=(FONT, 9, "bold"),
+                                    anchor="w", justify="left", padx=10, pady=6, wraplength=1200)
+        self.side_err = tk.Label(self.alerts, text="", bg=C_ERR_BG, fg=C_ERR_FG, font=(FONT, 9, "bold"), anchor="w",
+                                 justify="left", cursor="hand2", padx=10, pady=6)
+        self.side_err.bind("<Button-1>", self.copy_last_report)
+        self.side_foot = tk.Label(self.alerts, text="", bg=C_BG)
+        self._side_wraps = []
+
+    def _set_last(self, summary):
+        try:
+            self.side_last.config(text=summary if self.layout == "pro" else "Quét lần cuối:\n" + summary)
+        except (AttributeError, tk.TclError):
+            pass
+
+    # ----- đổi giao diện
+    def _theme_button(self, parent, bg, fg, hover):
+        b = tk.Label(parent, text="◐  Giao diện", bg=bg, fg=fg, font=(FONT, 9, "bold"), padx=12, pady=6,
+                     cursor="hand2", highlightbackground=hover, highlightthickness=1)
+        b.bind("<Enter>", lambda e: b.config(bg=hover))
+        b.bind("<Leave>", lambda e: b.config(bg=bg))
+        b.bind("<Button-1>", lambda e: self._theme_menu(b))
+        return b
+
+    def _theme_menu(self, widget):
+        m = tk.Menu(self, tearoff=0)
+        for key in ("pro", "classic"):
+            m.add_radiobutton(label=THEME_NAMES[key], variable=self.theme_var, value=key,
+                              command=lambda k=key: self.switch_theme(k))
+        try:
+            m.tk_popup(widget.winfo_rootx(), widget.winfo_rooty() + widget.winfo_height() + 2)
+        finally:
+            m.grab_release()
+
+    def switch_theme(self, name):
+        """Đổi giao diện: lưu lựa chọn rồi khởi động lại tool."""
+        if name not in THEMES:
+            return
+        if name == self.layout:
+            self.theme_var.set(name)
+            return
+        if self.worker and self.worker.is_alive():
+            messagebox.showinfo(APP_NAME, "Tool đang quét / tải - đợi xong rồi đổi giao diện.")
+            self.theme_var.set(self.layout)
+            return
+        if not messagebox.askyesno(APP_NAME, f"Chuyển sang:\n{THEME_NAMES[name]}\n\nTool sẽ tự khởi động lại "
+                                             "(dữ liệu, cài đặt giữ nguyên)."):
+            self.theme_var.set(self.layout)
+            return
+        self.cfg["ui_theme"] = name
+        self.save_config()
+        self.save_history()
+        restart_self()
+        self.quit_app(force=True)
 
     def _build_sidebar(self, parent):
         self.side_w = max(SIDE_MIN, min(SIDE_MAX, int(self.cfg.get("side_w", SIDE_W) or SIDE_W)))
@@ -1984,7 +2225,7 @@ class App(tk.Tk):
             return outer
 
         self.side_lib = card(side, "THƯ VIỆN", padx=14, pady=(16, 0))
-        self.side_owned = tk.Label(self.side_lib, text="", bg=C_SIDE_CARD, fg="#86efac", font=(FONT, 10),
+        self.side_owned = tk.Label(self.side_lib, text="", bg=C_SIDE_CARD, fg=C_SIDE_OK, font=(FONT, 10),
                                    anchor="w", justify="left", wraplength=W)
         self.side_owned.pack(fill="x", pady=(4, 0))
 
@@ -2020,17 +2261,17 @@ class App(tk.Tk):
         self.side_bk = tk.Label(ck, text="", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9), anchor="w",
                                 justify="left", wraplength=W)
         self.side_bk.pack(fill="x")
-        self.side_err = tk.Label(ck, text="", bg="#7a1f4a", fg="#ffd6e0", font=(FONT, 9, "bold"), anchor="w",
+        self.side_err = tk.Label(ck, text="", bg=C_ERR_BG, fg=C_ERR_FG, font=(FONT, 9, "bold"), anchor="w",
                                  justify="left", wraplength=W, cursor="hand2", padx=6, pady=4)
         self.side_err.bind("<Button-1>", self.copy_last_report)
-        self.side_health = tk.Label(ck, text="", bg=C_SIDE_CARD, fg="#fca5a5", font=(FONT, 9, "bold"), anchor="w",
+        self.side_health = tk.Label(ck, text="", bg=C_SIDE_CARD, fg=C_SIDE_BAD, font=(FONT, 9, "bold"), anchor="w",
                                     justify="left", wraplength=W)
         if self.cfg.get("last_backup"):
             self.side_bk.config(text="⟲ Sao lưu: " + self.cfg["last_backup"])
         tk.Label(ck, text=f"⌂ Máy: {MACHINE}", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9),
                  anchor="w").pack(fill="x", pady=(2, 0))
         self.side_foot = tk.Label(bottom, text="",
-                                  bg=C_SIDE, fg="#9d90de", font=(FONT, 8), anchor="w", justify="left", wraplength=W)
+                                  bg=C_SIDE, fg=C_FOOT, font=(FONT, 8), anchor="w", justify="left", wraplength=W)
         self._side_wraps = [self.side_rd, self.side_owned, self.side_last, self.side_pk, self.side_bk, self.side_foot, self.side_health, self.side_err]
         # vạch kéo đổi độ rộng thanh bên
         grip = tk.Frame(parent, bg=C_BORDER, width=5, cursor="sb_h_double_arrow")
@@ -2045,6 +2286,8 @@ class App(tk.Tk):
             self.after(10, lambda: self.toggle_sidebar(True))
 
     def _side_drag(self, e):
+        if self.layout != "classic":
+            return
         w = e.x_root - self.side.winfo_rootx()
         if getattr(self, "side_collapsed", False):
             if w < SIDE_MIN:
@@ -2070,6 +2313,8 @@ class App(tk.Tk):
 
     def toggle_sidebar(self, collapse=None):
         """Thu gọn / mở rộng thanh bên trái (Ctrl+B)."""
+        if getattr(self, "layout", "classic") != "classic":
+            return
         if collapse is None:
             collapse = not getattr(self, "side_collapsed", False)
         self.side_collapsed = collapse
@@ -2865,7 +3110,7 @@ class App(tk.Tk):
                                       "bấm tiêu đề cột để sắp xếp)", style="Muted.TLabel").pack(anchor="w", pady=(10, 4))
         lb = tk.Frame(self.tab_scan, bg=C_BORDER, padx=1, pady=1)
         lb.pack(fill="x")
-        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg="#1b1640", fg="#b9f6dc",
+        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg=C_LOG_BG, fg=C_LOG_FG,
                                insertbackground="white", relief="flat", padx=10, pady=8)
         self.log_box.pack(fill="both")
 
@@ -3144,7 +3389,10 @@ class App(tk.Tk):
         try:
             if probs:
                 self.side_health.config(text="⚠ " + "\n⚠ ".join(probs))
-                self.side_health.pack(fill="x", pady=(4, 0), before=self.side_pk)
+                if self.layout == "pro":
+                    self.side_health.pack(fill="x", pady=(8, 0))
+                else:
+                    self.side_health.pack(fill="x", pady=(4, 0), before=self.side_pk)
             else:
                 self.side_health.pack_forget()
         except (AttributeError, tk.TclError):
@@ -3458,7 +3706,7 @@ class App(tk.Tk):
         try:
             if n:
                 self.side_err.config(text=f"⚠ {n} báo cáo lỗi - bấm để COPY báo cáo mới nhất (dán vào Claude)")
-                self.side_err.pack(fill="x", pady=(6, 0))
+                self.side_err.pack(fill="x", pady=(8 if self.layout == "pro" else 6, 0))
             else:
                 self.side_err.pack_forget()
         except (AttributeError, tk.TclError):
@@ -3773,7 +4021,7 @@ class App(tk.Tk):
                 elif kind == "summary":
                     self.last_summary = msg[1]
                     self.cfg["last_summary"] = msg[1]
-                    self.side_last.config(text="Quét lần cuối:\n" + msg[1])
+                    self._set_last(msg[1])
                 elif kind == "retry_soon":
                     if self.cfg.get("auto_scan"):
                         self.next_auto_ts = min(self.next_auto_ts or 1e18, time.time() + msg[1])
@@ -4006,7 +4254,7 @@ class App(tk.Tk):
         def box(checked):
             n = 18
             img = tk.PhotoImage(width=n, height=n)
-            border = C_ACCENT if checked else "#b8bdd4"
+            border = C_ACCENT if checked else C_CHECK_BORDER
             fill = C_ACCENT if checked else C_FIELD
             for y in range(n):
                 row = []
@@ -4054,6 +4302,8 @@ class App(tk.Tk):
                                 padx=12, pady=6, cursor="hand2", highlightbackground=C_BORDER, highlightthickness=1)
         self.top_upd.pack(side="right", padx=(0, 10))
         self.top_upd.bind("<Button-1>", lambda e: self.check_update(silent=False))
+        self.top_theme = self._theme_button(inner, C_CARD, C_MUTED, C_SOFT)
+        self.top_theme.pack(side="right", padx=(0, 10))
         self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("gen")))
         self.header_auto_text = ""
 
@@ -4066,6 +4316,15 @@ class App(tk.Tk):
             self.top_sub.config(text=sub)
         except AttributeError:
             pass
+        if self.layout == "pro":
+            for k, n in self.nav.items():
+                on = k == key
+                for w in ("col", "row", "icon", "label"):
+                    n[w].config(bg=C_SIDE_CARD if on else C_SIDE)
+                n["bar"].config(bg=C_SIDE_ACTIVE if on else C_SIDE)
+                n["icon"].config(fg=C_SIDE_ACTIVE if on else C_SIDE_MUTED)
+                n["label"].config(fg="#ffffff" if on else C_SIDE_TEXT)
+            return
         for k, n in self.nav.items():
             on = k == key
             bg = C_SIDE_HOVER if on else C_SIDE
@@ -4080,14 +4339,16 @@ class App(tk.Tk):
             return
         bg = C_SIDE_HOVER if inside else C_SIDE
         n = self.nav[key]
-        for w in ("row", "icon", "label", "bar"):
+        for w in (("col", "row", "icon", "label", "bar") if self.layout == "pro" else ("row", "icon", "label", "bar")):
             n[w].config(bg=bg)
 
     def set_badge(self, key, value, color=None):
         b = self.nav[key]["badge"]
         if value:
             b.config(text=str(value), bg=color or C_ACCENT)
-            if not getattr(self, "side_collapsed", False):
+            if self.layout == "pro":
+                b.pack(side="left", padx=(6, 0))
+            elif not getattr(self, "side_collapsed", False):
                 b.pack(side="right", padx=10)
         else:
             b.config(text="")
@@ -4117,7 +4378,8 @@ class App(tk.Tk):
             info = tk.StringVar(value="—")
             tk.Label(inner, textvariable=info, bg=C_PANEL, fg=C_MUTED, font=(FONT, 9), width=44, anchor="w"
                      ).grid(row=r, column=1, sticky="w", padx=(0, 10))
-            bar = EnergyBar(inner, C_PANEL, height=20 if key == "dl" else 14, seg=40 if key == "dl" else 30)
+            bar = EnergyBar(inner, C_PANEL, height=20 if key == "dl" else 14, seg=40 if key == "dl" else 30,
+                            colors=ENERGY_SETS.get(key))
             bar.grid(row=r, column=2, sticky="we", pady=4)
             pct = tk.StringVar(value="0%")
             tk.Label(inner, textvariable=pct, bg=C_PANEL, fg=color, font=(MONO, 15 if key == "dl" else 11, "bold"),
@@ -4167,7 +4429,7 @@ class App(tk.Tk):
         tk.Label(top, text="●", bg=C_PANEL, fg=color, font=(FONT, 8)).pack(side="left")
         tk.Label(top, text="  " + title.upper(), bg=C_PANEL, fg=C_MUTED, font=(FONT, 8, "bold")).pack(side="left")
         if glyph:
-            tk.Label(top, text=glyph, bg=C_PANEL, fg="#c3bdf0", font=(FONT, 12)).pack(side="right")
+            tk.Label(top, text=glyph, bg=C_PANEL, fg=C_GLYPH, font=(FONT, 12)).pack(side="right")
         tk.Label(body, textvariable=var, bg=C_PANEL, fg=color, font=(MONO, 22, "bold")).pack(anchor="w", pady=(2, 0))
         return card, var
 
@@ -4644,6 +4906,15 @@ class App(tk.Tk):
 
         # ----- 1. Chung
         g = G(self._set_pages["gen"])
+        g.section("Giao diện", "Chọn kiểu giao diện. Đổi xong tool tự khởi động lại, dữ liệu và cài đặt giữ nguyên. "
+                               "Cũng đổi được bằng nút ◐ Giao diện trên thanh tiêu đề.")
+        fr = g.frame()
+        names = [THEME_NAMES["pro"], THEME_NAMES["classic"]]
+        th_var = tk.StringVar(value=THEME_NAMES.get(self.layout, names[0]))
+        ttk.Combobox(fr, textvariable=th_var, values=names, width=52, state="readonly").pack(side="left")
+        ttk.Button(fr, text="✓  Áp dụng", style="Accent.TButton",
+                   command=lambda: self.switch_theme("classic" if th_var.get() == THEME_NAMES["classic"] else "pro")
+                   ).pack(side="left", padx=8)
         g.section("Tự động")
         fr = g.frame()
         ttk.Checkbutton(fr, text="Tự quét & tải mỗi", variable=self.auto_var, command=self._auto_changed).pack(side="left")
@@ -4869,7 +5140,7 @@ class App(tk.Tk):
     # ================================================================ PIKPAK: tài khoản + kết nối
     def _set_pk_status(self, text, ok):
         self.pk_ok = ok
-        color = "#86efac" if ok is True else ("#fca5a5" if ok is False else C_SIDE_MUTED)
+        color = C_SIDE_OK if ok is True else (C_SIDE_BAD if ok is False else C_SIDE_MUTED)
         try:
             self.side_pk.config(text=text, fg=color)
         except (AttributeError, tk.TclError):
@@ -5023,7 +5294,7 @@ class App(tk.Tk):
         try:
             self.side_rd.config(text=("▣ RaiDrive: ✔ " + (rd_root(self.cfg) or "")) if ok else
                                 ("▣ RaiDrive: ✘ " + info.get("state", "").lstrip("✘ ")),
-                                fg="#86efac" if ok else "#fca5a5")
+                                fg=C_SIDE_OK if ok else C_SIDE_BAD)
         except (AttributeError, tk.TclError):
             pass
         if prev is True and ok is False:
