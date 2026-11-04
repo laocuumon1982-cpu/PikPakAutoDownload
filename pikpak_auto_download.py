@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v2.9 by Duy Anh
+Auto Download - PikPak v3.0 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v2.9 by Duy Anh"
+APP_VERSION = "v3.0 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -652,62 +652,117 @@ def raidrive_running():
     if os.name != "nt":
         return None
     try:
-        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RaiDrive.exe", "/NH"], capture_output=True, text=True,
-                             creationflags=subprocess.CREATE_NO_WINDOW, timeout=15).stdout
-        return "raidrive.exe" in out.lower()
+        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RaiDrive*", "/FO", "CSV", "/NH"], capture_output=True,
+                             text=True, creationflags=subprocess.CREATE_NO_WINDOW, timeout=15).stdout
+        return any(_is_rd_ui(line.split('","')[0].strip('"')) for line in out.splitlines() if line.strip())
     except Exception:
         return None
 
 
-def hide_raidrive_windows(timeout=40, settle=6):
-    """Ẩn cửa sổ RaiDrive.exe (thu xuống khay - biểu tượng RaiDrive vẫn ở góc đồng hồ).
-    Chờ tối đa `timeout` giây cho cửa sổ hiện ra; sau lần ẩn đầu tiên canh thêm `settle` giây
-    (RaiDrive có thể hiện màn hình chờ rồi mới tới cửa sổ chính). Trả về số cửa sổ đã ẩn."""
+def _is_rd_ui(name):
+    """Tên tiến trình là ứng dụng RaiDrive (không tính dịch vụ / trình cập nhật)."""
+    n = (name or "").lower()
+    return n.startswith("raidrive") and n.endswith(".exe") and not any(
+        x in n for x in ("service", "svc", "update", "helper", "uninst", "setup"))
+
+
+def raidrive_windows(log=None):
+    """Danh sách cửa sổ chính của RaiDrive: [(hwnd, tiêu đề, tên tiến trình, đang hiện)]."""
+    if os.name != "nt":
+        return []
+    import ctypes
+    from ctypes import wintypes
+    user32, k32 = ctypes.WinDLL("user32"), ctypes.WinDLL("kernel32")    # bản riêng, không đụng argtypes chung
+    enum_proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user32.EnumWindows.argtypes = [enum_proto, wintypes.LPARAM]
+    for fn in ("IsWindowVisible", "GetWindowTextLengthW", "IsIconic"):
+        getattr(user32, fn).argtypes = [wintypes.HWND]
+    user32.GetWindow.argtypes = [wintypes.HWND, wintypes.UINT]
+    user32.GetWindow.restype = wintypes.HWND
+    user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    k32.OpenProcess.restype = wintypes.HANDLE
+    k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    k32.QueryFullProcessImageNameW.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPWSTR,
+                                               ctypes.POINTER(wintypes.DWORD)]
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    names = {}
+
+    def proc_name(pid):
+        if pid not in names:
+            n = ""
+            h = k32.OpenProcess(0x1000, False, pid)        # PROCESS_QUERY_LIMITED_INFORMATION
+            if h:
+                try:
+                    buf = ctypes.create_unicode_buffer(1024)
+                    size = wintypes.DWORD(1024)
+                    if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
+                        n = os.path.basename(buf.value)
+                finally:
+                    k32.CloseHandle(h)
+            names[pid] = n
+        return names[pid]
+
+    res = []
+
+    def _cb(hwnd, _l):
+        try:
+            ln = user32.GetWindowTextLengthW(hwnd)
+            if ln <= 0 or user32.GetWindow(hwnd, 4):       # bỏ cửa sổ không tên / cửa sổ con (GW_OWNER)
+                return True
+            buf = ctypes.create_unicode_buffer(ln + 1)
+            user32.GetWindowTextW(hwnd, buf, ln + 1)
+            title = buf.value
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            pn = proc_name(pid.value)
+            if _is_rd_ui(pn) or (not pn and title.lower().startswith("raidrive")):
+                res.append((hwnd, title, pn, bool(user32.IsWindowVisible(hwnd))))
+        except Exception:
+            pass
+        return True
+    cb = enum_proto(_cb)
+    user32.EnumWindows(cb, 0)
+    return res
+
+
+def hide_raidrive_windows(timeout=120, settle=25, log=None):
+    """Thu cửa sổ RaiDrive xuống khay (ẩn cửa sổ, biểu tượng RaiDrive vẫn ở góc đồng hồ).
+    Canh tối đa `timeout` giây: RaiDrive hay hiện màn hình chờ, rồi cửa sổ chính, có khi hiện lại sau khi
+    kết nối ổ -> lần nào hiện là ẩn, dừng khi đã yên `settle` giây kể từ lần ẩn cuối. Trả về số lần ẩn."""
     if os.name != "nt":
         return 0
     import ctypes
     from ctypes import wintypes
-    user32, k32 = ctypes.windll.user32, ctypes.windll.kernel32
-    names = {}
-
-    def proc_name(pid):
-        if pid in names:
-            return names[pid]
-        n = ""
-        h = k32.OpenProcess(0x1000, False, pid)        # PROCESS_QUERY_LIMITED_INFORMATION
-        if h:
-            try:
-                buf = ctypes.create_unicode_buffer(1024)
-                size = wintypes.DWORD(1024)
-                if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
-                    n = os.path.basename(buf.value).lower()
-            finally:
-                k32.CloseHandle(h)
-        names[pid] = n
-        return n
-
-    found = []
-    proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
-    def cb(hwnd, _l):
-        if user32.IsWindowVisible(hwnd) and user32.GetWindowTextLengthW(hwnd) > 0 and not user32.GetWindow(hwnd, 4):
-            pid = wintypes.DWORD()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-            if proc_name(pid.value) == "raidrive.exe":
-                found.append(hwnd)
-        return True
-    enum_cb = proto(cb)
-    hidden, t0, first = 0, time.time(), None
+    user32 = ctypes.WinDLL("user32")
+    user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.IsWindowVisible.argtypes = [wintypes.HWND]
+    user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    hidden, t0, last, seen = 0, time.time(), None, set()
     while time.time() - t0 < timeout:
-        found.clear()
-        user32.EnumWindows(enum_cb, 0)
-        for hwnd in found:
-            user32.ShowWindow(hwnd, 0)                 # SW_HIDE
+        for hwnd, title, pn, vis in raidrive_windows():
+            if not vis:
+                continue
+            user32.ShowWindow(hwnd, 0)                         # SW_HIDE
+            time.sleep(0.2)
+            if user32.IsWindowVisible(hwnd):                   # bị chặn (VD RaiDrive chạy quyền Admin)
+                user32.PostMessageW(hwnd, 0x0112, 0xF020, 0)    # WM_SYSCOMMAND / SC_MINIMIZE
+                time.sleep(0.3)
+                if user32.IsWindowVisible(hwnd) and hwnd not in seen and log:
+                    log(f"⚠ Windows không cho ẩn cửa sổ \"{title}\" ({pn or '?'}) - có thể RaiDrive đang chạy "
+                        "bằng quyền Administrator: bỏ \"Run as administrator\" của RaiDrive hoặc chạy tool bằng "
+                        "quyền Admin.")
+            seen.add(hwnd)
             hidden += 1
-            first = first or time.time()
-        if first and time.time() - first > settle:
+            last = time.time()
+        if last and time.time() - last > settle:
             break
         time.sleep(0.5)
+    if not hidden and log:
+        found = raidrive_windows()
+        log("⚠ Không thấy cửa sổ RaiDrive để thu nhỏ" + (": " + "; ".join(
+            f"{t} [{p}] {'hiện' if v else 'ẩn'}" for _h, t, p, v in found[:5]) if found else
+            " (RaiDrive có thể đã tự nằm dưới khay)."))
     return hidden
 
 
@@ -1702,7 +1757,7 @@ class App(tk.Tk):
         self.after(1500, lambda: self.check_pikpak(silent=True))
         self.after(2500, self._ask_rclone_first_run)
         self.after(1200, self._rd_tick)
-        self.after(700, lambda: threading.Thread(target=self.ensure_raidrive, kwargs={"wait": 90},
+        self.after(700, lambda: threading.Thread(target=self.ensure_raidrive, kwargs={"wait": 90, "startup": True},
                                                  daemon=True).start())
         self.report_callback_exception = self._tk_exception
         self.after(1600, self._show_err_badge)
@@ -4645,6 +4700,9 @@ class App(tk.Tk):
         ttk.Button(fr, text="⟳  Kiểm tra trạng thái", style="Accent.TButton",
                    command=lambda: self.check_raidrive(silent=False)).pack(side="left")
         ttk.Button(fr, text="↗  Mở ổ", command=lambda: open_target(rd_root(self.cfg))).pack(side="left", padx=8)
+        ttk.Button(fr, text="▾  Thu RaiDrive xuống khay", command=lambda: (
+            self.log("▣ Đang thu nhỏ cửa sổ RaiDrive xuống khay..."), self._rd_tray(timeout=8, settle=2))
+                   ).pack(side="left")
         g.section("Cấu hình", "Ổ RaiDrive mount WebDAV PikPak của người chia sẻ. Thư mục nguồn chọn trên ổ này được lưu "
                               "không phụ thuộc ký tự ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
         g.entry("Ổ RaiDrive", self.rd_var, self._browse_rd, width=14)
@@ -4973,7 +5031,18 @@ class App(tk.Tk):
         if not silent:
             self.log("RaiDrive: " + info.get("state", ""))
 
-    def ensure_raidrive(self, wait=90):
+    def _rd_tray(self, timeout=120, settle=25):
+        """Chạy nền: thu cửa sổ RaiDrive xuống khay."""
+        def job():
+            try:
+                if hide_raidrive_windows(timeout, settle, log=self.log):
+                    self.log("▣ Đã thu nhỏ RaiDrive xuống khay hệ thống.")
+            except Exception as e:
+                self.log(f"⚠ Không thu nhỏ được RaiDrive xuống khay: {e}")
+                self.report_error("Không thu nhỏ được RaiDrive", str(e), exc=e)
+        threading.Thread(target=job, daemon=True).start()
+
+    def ensure_raidrive(self, wait=90, startup=False):
         """Chạy nền: thư mục phim dùng ổ RaiDrive mà RaiDrive.exe chưa mở -> tự mở RaiDrive, chờ ổ kết nối."""
         cfg = self.cfg
         if not cfg.get("rd_autostart", True) or os.name != "nt":
@@ -4982,6 +5051,8 @@ class App(tk.Tk):
             return False
         root = rd_root(cfg)
         if raidrive_running() is not False:
+            if startup and cfg.get("rd_to_tray", True):       # RaiDrive mở sẵn (VD khởi động cùng Windows)
+                self._rd_tray(timeout=20, settle=8)
             return bool(root and os.path.isdir(root))
         exe = find_raidrive_exe(cfg.get("raidrive_exe", ""))
         if not exe:
@@ -4991,17 +5062,18 @@ class App(tk.Tk):
             flags = 0x00000008 | 0x00000200       # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
             subprocess.Popen([exe], cwd=os.path.dirname(exe), creationflags=flags, close_fds=True, env=clean_env())
         except OSError as e:
-            self.log(f"⚠ Không mở được RaiDrive ({exe}): {e}")
-            return False
+            if getattr(e, "winerror", 0) == 740:      # RaiDrive đòi quyền Admin -> mở qua Windows (hỏi UAC)
+                try:
+                    os.startfile(exe)
+                except OSError as e2:
+                    self.log(f"⚠ Không mở được RaiDrive ({exe}): {e2}")
+                    return False
+            else:
+                self.log(f"⚠ Không mở được RaiDrive ({exe}): {e}")
+                return False
         self.log("▣ RaiDrive chưa mở - đã tự mở RaiDrive, chờ ổ kết nối...")
         if cfg.get("rd_to_tray", True):
-            def _tray():
-                try:
-                    if hide_raidrive_windows():
-                        self.log("▣ Đã thu nhỏ RaiDrive xuống khay hệ thống.")
-                except Exception as e:
-                    self.log(f"⚠ Không thu nhỏ được RaiDrive xuống khay: {e}")
-            threading.Thread(target=_tray, daemon=True).start()
+            self._rd_tray()
         self.q.put(("status", "Đang mở RaiDrive, chờ ổ kết nối..."))
         t0 = time.time()
         while time.time() - t0 < wait:

@@ -1,6 +1,14 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v3.0  (04/11/2026)
+  - Sửa lỗi không tự thu nhỏ cửa sổ RaiDrive xuống khay:
+    · nhận đúng tiến trình ứng dụng RaiDrive (bỏ qua dịch vụ RaiDrive.Service), tìm cả theo tiêu đề cửa sổ;
+    · canh tới 2 phút - RaiDrive hiện lại cửa sổ (màn hình chờ, sau khi kết nối ổ) là ẩn tiếp;
+    · RaiDrive đã mở sẵn lúc bật tool (VD khởi động cùng Windows) cũng được thu xuống khay;
+    · không ẩn được (RaiDrive chạy quyền Admin) thì thu nhỏ và ghi nhật ký lý do.
+  - Thêm nút "Thu RaiDrive xuống khay" ở Cài đặt > RaiDrive để thử ngay.
+
 v2.9  (04/11/2026)
   - Tool tự mở RaiDrive xong thì thu nhỏ cửa sổ RaiDrive xuống khay hệ thống (biểu tượng ở góc đồng hồ).
     Bật/tắt ở Cài đặt > RaiDrive.
