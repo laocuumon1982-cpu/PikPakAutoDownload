@@ -1,6 +1,16 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v3.3  (04/11/2026)
+  - Đổi cách hoạt động:
+    1) Tải từ ổ RaiDrive vào thư mục COPY TO IPHONE trước (mọi phim chung 1 chỗ, không chia thư mục con).
+    2) Up lên My PikPak từ bản trong COPY TO IPHONE (chạy nền) và cùng lúc copy sang thư mục đích HDD
+       (đặt ở tab Thư mục phim - giờ là BẮT BUỘC).
+    3) File trong COPY TO IPHONE giữ nguyên; xóa đi tool cũng không tải lại (đã nằm trong Danh sách đã có).
+  - Copy sang HDD lỗi thì lần sau chỉ copy lại từ COPY TO IPHONE, không tải lại từ RaiDrive;
+    đã up PikPak xong thì không up lại.
+  - Kiểm tra trước khi tải: thêm kiểm tra chỗ trống ổ chứa COPY TO IPHONE.
+
 v3.2  (04/11/2026)
   - Sửa lỗi copy từ ổ RaiDrive bị "FileNotFoundError" giữa chừng (file lớn 2-3 GB): không bỏ cả file nữa mà
     chờ vài giây, mở lại file và ĐỌC TIẾP từ đúng chỗ đang copy (tối đa 12 lần), cột Trạng thái hiện

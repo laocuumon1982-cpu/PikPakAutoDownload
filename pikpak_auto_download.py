@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v3.2 by Duy Anh
+Auto Download - PikPak v3.3 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v3.2 by Duy Anh"
+APP_VERSION = "v3.3 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -200,7 +200,6 @@ DEFAULT_CONFIG = {
     "rd_autostart": True,         # mở tool mà RaiDrive chưa chạy -> tự mở RaiDrive
     "raidrive_exe": "",           # đường dẫn RaiDrive.exe (trống = tự tìm)
     "rd_to_tray": True,           # tự mở RaiDrive xong thì thu nhỏ cửa sổ RaiDrive xuống khay
-    "iphone_on": True,            # copy thêm 1 bản vào thư mục COPY TO IPHONE
     "iphone_dir": default_iphone_dir(),
     "folders": [{"id": "hh3dkimngo", "name": "Update HH3D kimngonx5", "url": "@RD@\\Update HH3D kimngonx5",
                  "enabled": True, "split": "auto", "note": "Ổ Z (PikPak - Thúng)",
@@ -3184,6 +3183,16 @@ class App(tk.Tk):
                 chk.append((d, n))
             except OSError as e:
                 probs.append(f"Không tạo được thư mục đích {d}: {e}")
+        st_dir = from_portable(cfg.get("iphone_dir") or "") or default_iphone_dir()
+        st_drv = os.path.splitdrive(os.path.abspath(st_dir))[0]
+        if st_drv and not os.path.exists(st_drv + os.sep):
+            probs.append(f"Không thấy ổ {st_drv} của thư mục COPY TO IPHONE.")
+        else:
+            try:
+                os.makedirs(st_dir, exist_ok=True)
+                chk.append((st_dir, need))
+            except OSError as e:
+                probs.append(f"Không tạo được thư mục COPY TO IPHONE {st_dir}: {e}")
         seen_drive = {}
         for d, n in chk:
             if not os.path.isdir(d):
@@ -3574,7 +3583,8 @@ class App(tk.Tk):
         self.report_error("Lỗi giao diện (không lường trước)", str(val), exc=val)
 
     def _fetch_one(self, cfg, item):
-        """1 file: [lưu vào My PikPak (sao chép trên máy chủ)] + [tải / copy về thư mục HDD] -> Danh sách đã có."""
+        """1 file: RaiDrive -> COPY TO IPHONE (thư mục chung) -> [up My PikPak (chạy nền) + copy sang HDD]
+        -> Danh sách đã có."""
         fcode, fname, name, size, folder_code = item
         meta = dict(self.item_meta.get(fcode) or (self.history.get(fcode) or {}).get("src") or {})
         if not meta:
@@ -3583,8 +3593,8 @@ class App(tk.Tk):
         movie = fname or movie_of(fcfg, meta.get("sub", ""), name)
         hdd_dir = local_dir_for(cfg, fcfg, movie)
         pk_dir = pikpak_folder(cfg, fcfg, movie)
-        if not hdd_dir and not pk_dir:
-            raise SourceError("Thư mục phim chưa có đích đến (HDD / My PikPak) - bấm Sửa để đặt.")
+        if not hdd_dir:
+            raise SourceError("Thư mục phim chưa đặt đích HDD - vào tab Thư mục phim, bấm Sửa để đặt.")
         try:
             size = int(size or 0)
         except (TypeError, ValueError):
@@ -3640,126 +3650,114 @@ class App(tk.Tk):
                                       "lần sau thử lại.")
             src_remote = target
             saved = target if pk_dir else ""
-        pk_thread, pk_res = None, {}
-        # Nguồn trên ổ RaiDrive = WebDAV PikPak của NGƯỜI CHIA SẺ -> rclone (tài khoản của bạn) không đọc được:
-        # copy 1 luồng từ ổ RaiDrive về HDD, rồi rclone upload bản trên HDD lên My PikPak (chạy nền).
-        # ----- 2. tải / copy về HDD
-        dst = ""
-        if hdd_dir:
-            os.makedirs(hdd_dir, exist_ok=True)
-            dst = os.path.join(hdd_dir, safe_name(name))
-            self.q.put(("rowstatus", fcode, "⬇  Đang tải về HDD...", "dl"))
-            use_copy = bool(meta.get("path"))
-            threads = 1                            # RaiDrive: copy 1 luồng
-            if os.path.isfile(dst) and size and os.path.getsize(dst) == size:
-                ok, msg = True, ""                 # đã có sẵn
-            elif use_copy:                         # copy từ ổ RaiDrive (đa luồng)
+        def stopped():
+            rec["status"] = STATUS_FAIL
+            self.q.put(("hist", fcode, dict(rec)))
+            self.q.put(("rowstatus", fcode, "■  Đã dừng", "skip"))
+            return False
+
+        # ----- 2. tải vào COPY TO IPHONE (thư mục chung, không chia thư mục con)
+        stage_dir = from_portable(cfg.get("iphone_dir") or "") or default_iphone_dir()
+        os.makedirs(stage_dir, exist_ok=True)
+        os.makedirs(hdd_dir, exist_ok=True)
+        stage = os.path.join(stage_dir, safe_name(name))
+        dst = os.path.join(hdd_dir, safe_name(name))
+
+        def full(pth):
+            return os.path.isfile(pth) and (os.path.getsize(pth) == size if size else os.path.getsize(pth) > 0)
+        hdd_ok = full(dst)
+        if full(stage):
+            self.log(f"[{name}] Đã có sẵn trong COPY TO IPHONE - bỏ qua bước tải.")
+        elif hdd_ok:
+            self.log(f"[{name}] HDD đã có đủ file - bỏ qua bước tải vào COPY TO IPHONE.")
+        else:
+            phase[:] = ["⬇", "Tải vào COPY TO IPHONE"]
+            last[1] = -1
+            self.q.put(("rowstatus", fcode, "⬇  Đang tải vào COPY TO IPHONE...", "dl"))
+            if meta.get("path"):                   # ổ RaiDrive: copy 1 luồng, lỗi đọc thì đọc tiếp
                 if not os.path.isfile(meta["path"]):
                     if not src_remote:
                         raise SourceError(f"Không thấy file trên ổ: {meta['path']} (ổ RaiDrive chưa kết nối?)")
                     ok, msg = False, "không thấy file trên ổ RaiDrive"
                 else:
-                    ok, msg = fast_copy(meta["path"], dst, prog, self.stop_flag, threads)
+                    ok, msg = copy_with_progress(meta["path"], stage, prog, self.stop_flag, chunk=8 << 20)
                 if not ok and not self.stop_flag.is_set() and src_remote:
                     self.log(f"[{name}] Copy từ ổ lỗi ({msg[:120]}) - chuyển sang rclone.")
-                    ok, msg = rclone_copy(rclone, src_remote, dst, prog, self.stop_flag, extra)
-            elif src_remote:
-                ok, msg = rclone_copy(rclone, src_remote, dst, prog, self.stop_flag, extra)
-                if not ok and not self.stop_flag.is_set() and meta.get("path") and os.path.isfile(meta["path"]):
-                    self.log(f"[{name}] rclone lỗi ({msg[:120]}) - chuyển sang copy từ ổ RaiDrive.")
-                    ok, msg = fast_copy(meta["path"], dst, prog, self.stop_flag, threads)
-            elif meta.get("path"):
-                if not os.path.isfile(meta["path"]):
-                    raise SourceError(f"Không thấy file trên ổ: {meta['path']} (ổ RaiDrive chưa kết nối?)")
-                ok, msg = fast_copy(meta["path"], dst, prog, self.stop_flag, threads)
+                    ok, msg = rclone_copy(rclone, src_remote, stage, prog, self.stop_flag, extra)
+            elif src_remote:                       # link chia sẻ (đã lưu vào My PikPak) -> rclone tải về
+                ok, msg = rclone_copy(rclone, src_remote, stage, prog, self.stop_flag, extra)
             else:
                 raise SourceError("Không có cách tải file này.")
             if self.stop_flag.is_set() and not ok:
-                rec["status"] = STATUS_FAIL
-                self.q.put(("hist", fcode, dict(rec)))
-                self.q.put(("rowstatus", fcode, "■  Đã dừng", "skip"))
-                return False
+                return stopped()
             if not ok:
-                removed = self._remove_broken(dst, size)
+                removed = self._remove_broken(stage, size)
                 self._fetch_fail(item, STATUS_FAIL, (msg or "lỗi không rõ") +
                                  (" · đã xóa file lỗi, đưa vào danh sách tải lại" if removed else " · sẽ tải lại"))
                 return False
-            got = os.path.getsize(dst) if os.path.isfile(dst) else 0
+            got = os.path.getsize(stage) if os.path.isfile(stage) else 0
             if size and got < size * 0.995:        # tải thiếu -> xóa file lỗi, tải lại
-                self._remove_broken(dst, size, force=True)
-                self.q.put(("owned_remove", fcode, folder_code, name))
+                self._remove_broken(stage, size, force=True)
                 self._fetch_fail(item, STATUS_BAD, f"{human_size(got)} / {human_size(size)} - đã xóa file lỗi, "
                                                    "đưa vào danh sách tải lại")
                 return False
-            self.log(f"→ Đã copy về HDD: {dst}")
-        phase[:] = ["📱", "Copy vào COPY TO IPHONE"]
-        last[1] = -1
-        self._copy_to_iphone(item, fcode, name, dst or meta.get("path") or "", size, prog)
-        if pk_thread is not None:
-            if pk_thread.is_alive():
-                self.q.put(("rowstatus", fcode, "☁  Đang lưu vào My PikPak...", "dl"))
-            pk_thread.join()
-            if pk_res.get("ok"):
-                saved = pk_res["target"]
-                self.log(f"☁ Đã lưu My PikPak: {saved}")
-            elif not self.stop_flag.is_set():
-                self.log(f"⚠ [{name}] Lưu My PikPak lỗi: {pk_res.get('msg', '')[:160]} - sẽ thử lại bằng hàng chờ.")
-                self.report_error(f"Lưu My PikPak lỗi: {name}", pk_res.get("msg", ""), item=item)
-        if pk_dir and not saved and not meta.get("share") and not src_remote and not hdd_dir and rclone \
-                and meta.get("path") and os.path.isfile(meta["path"]):
-            target = f"{remote}:{pikpak_join(pk_dir, name)}"
-            self.q.put(("rowstatus", fcode, "☁  Đang upload lên My PikPak...", "dl"))
-            ok_up, msg_up = rclone_copy(rclone, meta["path"], target, lambda p, sp="": (self.q.put(
-                ("rowstatus", fcode, f"☁ {ebar(p)} {p:>3}%  {sp}", "dl")), self.q.put(
-                ("energy", "up", p, f"↑ {name}   {sp}".rstrip()))), self.stop_flag, extra)
-            if ok_up:
-                saved = target
-            else:
-                self.report_error(f"Upload My PikPak lỗi: {name}", msg_up, item=item)
-        if not hdd_dir and pk_dir and not saved:
-            self._fetch_fail(item, STATUS_FAIL, "Không lưu được vào My PikPak")
-            return False
-        rec.update(status=STATUS_DONE, done_ts=time.time(), path=dst, hdd=dst, tries=0, error="")
-        if saved:
-            rec.update(upload="done", upload_msg=saved, upload_ts=time.time())
-        elif pk_dir:
-            rec.update(upload="", remote_src=src_remote or "")   # không có remote_src -> upload từ file HDD
+            self.log(f"📱 Đã tải vào COPY TO IPHONE: {stage}")
+        up_src = stage if os.path.isfile(stage) else dst
+
+        # ----- 3. up My PikPak từ bản trong COPY TO IPHONE (chạy nền, song song với copy sang HDD)
+        queued_up = False
+        if pk_dir and not saved and rec.get("upload") == "done":
+            saved = rec.get("upload_msg") or "đã lưu"          # lần trước đã up xong (lỗi ở bước HDD)
+        elif pk_dir and not saved and rclone and rec.get("upload") in ("pending", "uploading"):
+            queued_up = True                                    # đang up dở từ lần trước
+        elif pk_dir and not saved and rclone:
+            rec.update(up_path=up_src, path=up_src, upload="", remote_src="")
+            self.q.put(("hist", fcode, dict(rec)))
+            self.q.put(("fetched", fcode))
+            queued_up = True
+
+        # ----- 4. copy COPY TO IPHONE -> HDD (thư mục đích theo tab Thư mục phim)
+        if not hdd_ok:
+            phase[:] = ["💾", "Copy sang HDD"]
+            last[1] = -1
+            self.q.put(("rowstatus", fcode, "💾  Đang copy sang HDD...", "dl"))
+            self.q.put(("energy", "dl", 0, f"💾 {name}"))
+            ok, msg = copy_with_progress(up_src, dst, prog, self.stop_flag, chunk=16 << 20)
+            if self.stop_flag.is_set() and not ok:
+                self._remove_broken(dst, size, force=True)
+                return stopped()
+            if not ok:
+                self._remove_broken(dst, size, force=True)
+                self._fetch_fail(item, STATUS_FAIL, f"Copy sang HDD lỗi: {msg or 'lỗi không rõ'} · file vẫn còn trong "
+                                                    "COPY TO IPHONE, lần sau chỉ copy lại sang HDD")
+                return False
+            got = os.path.getsize(dst) if os.path.isfile(dst) else 0
+            if size and got < size * 0.995:
+                self._remove_broken(dst, size, force=True)
+                self._fetch_fail(item, STATUS_BAD, f"Copy sang HDD thiếu: {human_size(got)} / {human_size(size)}")
+                return False
+            self.log(f"💾 Đã copy sang HDD: {dst}")
+        done = dict(status=STATUS_DONE, done_ts=time.time(), path=dst, hdd=dst, stage=stage, tries=0, error="")
+        if queued_up:
+            done["up_path"] = up_src
+            self.q.put(("histmerge", fcode, done))     # không ghi đè trạng thái upload đang chạy
         else:
-            rec["upload"] = "skip"
-        self.q.put(("hist", fcode, dict(rec)))
+            rec.update(done)
+            if saved:
+                rec.update(upload="done", upload_msg=saved, upload_ts=time.time())
+            elif pk_dir:
+                rec.update(upload="", up_path=up_src)
+            else:
+                rec["upload"] = "skip"
+            self.q.put(("hist", fcode, dict(rec)))
+            if pk_dir and not saved:
+                self.q.put(("fetched", fcode))         # (chưa có rclone) -> hàng chờ thử lại sau
         self.q.put(("owned_add", fcode, folder_code, movie, name, size, "tool"))
-        if pk_dir and not saved:
-            self.q.put(("fetched", fcode))         # lưu My PikPak bằng hàng chờ (upload / thử lại)
-        self.q.put(("rowstatus", fcode, "✔  Xong" + (" · HDD" if dst else "") + (" · My PikPak" if saved else
-                                                                                 (" · chờ lưu PikPak" if pk_dir else "")),
+        self.q.put(("rowstatus", fcode, "✔  Xong · iPhone · HDD" + (" · My PikPak" if saved else
+                                                                     (" · đang lưu PikPak" if pk_dir else "")),
                     "done"))
         self.log(f"✔ Xong: {name}")
         return True
-
-    def _copy_to_iphone(self, item, fcode, name, src, size, prog):
-        """Copy thêm 1 bản vào thư mục COPY TO IPHONE. Lỗi chỉ báo, không làm hỏng tập đã tải."""
-        if not self.cfg.get("iphone_on", True) or self.stop_flag.is_set():
-            return
-        d = from_portable(self.cfg.get("iphone_dir") or "") or default_iphone_dir()
-        if not src or not os.path.isfile(src):
-            return
-        dst = os.path.join(d, safe_name(name))
-        try:
-            if os.path.normcase(os.path.abspath(dst)) == os.path.normcase(os.path.abspath(src)):
-                return
-            os.makedirs(d, exist_ok=True)
-            if os.path.isfile(dst) and os.path.getsize(dst) == os.path.getsize(src):
-                return                             # đã có sẵn
-            self.q.put(("rowstatus", fcode, "📱  Đang copy vào COPY TO IPHONE...", "dl"))
-            ok, msg = copy_with_progress(src, dst, prog, self.stop_flag, chunk=16 << 20)
-            if not ok:
-                self._remove_broken(dst, size, force=True)
-                raise OSError(msg or "lỗi không rõ")
-            self.log(f"📱 Đã copy vào COPY TO IPHONE: {dst}")
-        except Exception as e:
-            self.log(f"⚠ [{name}] Copy vào COPY TO IPHONE lỗi: {e}")
-            self.report_error(f"Copy vào COPY TO IPHONE lỗi: {name}", str(e), item=item,
-                              exc=e if not isinstance(e, OSError) else None)
 
     def history_mark_done(self):
         sel = self.hist_tree.selection()
@@ -3832,6 +3830,9 @@ class App(tk.Tk):
                     self.update_stats()
                 elif kind == "hist":
                     self.history[msg[1]] = msg[2]
+                    hist_changed = True
+                elif kind == "histmerge":
+                    self.history.setdefault(msg[1], {}).update(msg[2])
                     hist_changed = True
                 elif kind == "owned_add":
                     _, fcode, folder_code, fname, name, size, src = msg
@@ -4352,7 +4353,7 @@ class App(tk.Tk):
         v["local_dir"].set(from_portable(old.get("local_dir", "")) if old else defaults["local_dir"])
         v["url"].set(resolve_src(self.cfg, old.get("url", "")) or old.get("url", ""))
         en = tk.BooleanVar(value=old.get("enabled", True))
-        use_hdd = tk.BooleanVar(value=bool(v["local_dir"].get()))
+        use_hdd = tk.BooleanVar(value=True)      # đích HDD bắt buộc
         use_pk = tk.BooleanVar(value=bool(v["pikpak_dir"].get()))
         sub_movie = tk.BooleanVar(value=old.get("sub_movie", True))
         r = 1
@@ -4408,7 +4409,8 @@ class App(tk.Tk):
         tk.Label(body, text="ĐÍCH ĐẾN", bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold")).grid(
             row=r, column=0, columnspan=3, sticky="w")
         r += 1
-        ttk.Checkbutton(body, text="Copy về HDD của PC", variable=use_hdd).grid(row=r, column=0, sticky="w", pady=6)
+        tk.Label(body, text="Đích HDD (bắt buộc)", bg=C_CARD, fg=C_TEXT, font=(FONT, 10)).grid(
+            row=r, column=0, sticky="w", pady=6)
         e_hdd = ttk.Entry(body, textvariable=v["local_dir"], width=62)
         e_hdd.grid(row=r, column=1, sticky="we", pady=6)
         ttk.Button(body, text="Chọn...", style="Small.TButton",
@@ -4416,7 +4418,7 @@ class App(tk.Tk):
                                                                                            padx=(8, 0), sticky="w")
         r += 1
         ttk.Checkbutton(body, text="Save vào My PikPak", variable=use_pk).grid(row=r, column=0, sticky="w", pady=6)
-        tk.Label(body, text="copy 1 luồng từ ổ RaiDrive  →  HDD          rclone (tài khoản của bạn) upload bản trên HDD  →  My PikPak",
+        tk.Label(body, text="RaiDrive  →  COPY TO IPHONE (thư mục chung)  →  copy sang HDD  +  rclone up lên My PikPak",
                  bg=C_CARD, fg=C_MUTED, font=(FONT, 8)).grid(row=r + 1, column=1, columnspan=2, sticky="w")
         e_pk = ttk.Entry(body, textvariable=v["pikpak_dir"], width=62)
         e_pk.grid(row=r, column=1, sticky="we", pady=6)
@@ -4442,7 +4444,11 @@ class App(tk.Tk):
                              .rstrip("\\/") + os.sep)
             if use_pk.get() and v["pikpak_dir"].get().strip():
                 lines.append("PIKPAK   › " + pikpak_join(v["pikpak_dir"].get(), mv if sub_movie.get() else "") + "/")
-            preview.set("\n".join(lines) or "⚠ Chưa chọn đích đến nào")
+            st = from_portable(self.cfg.get("iphone_dir") or "") or default_iphone_dir()
+            lines.insert(0, "TẢI VỀ   › " + st.rstrip("\\/") + os.sep + "   (COPY TO IPHONE, chung mọi phim)")
+            if not v["local_dir"].get().strip():
+                lines.append("⚠ Chưa chọn thư mục đích HDD (bắt buộc)")
+            preview.set("\n".join(lines))
         for var in (use_hdd, use_pk, sub_movie, v["local_dir"], v["pikpak_dir"]):
             var.trace_add("write", upd)
         upd()
@@ -4489,8 +4495,8 @@ class App(tk.Tk):
                 return
             hdd = v["local_dir"].get().strip() if use_hdd.get() else ""
             pk = pikpak_join(v["pikpak_dir"].get()) if use_pk.get() else ""
-            if not hdd and not pk:
-                messagebox.showwarning(APP_NAME, "Chọn ít nhất 1 đích đến: HDD hoặc My PikPak.", parent=win)
+            if not hdd:
+                messagebox.showwarning(APP_NAME, "Chọn thư mục đích trên HDD (bắt buộc).", parent=win)
                 return
             key = src_key(self.cfg, src)
             for j, f in enumerate(self.cfg["folders"]):
@@ -4607,7 +4613,6 @@ class App(tk.Tk):
         self.rdauto_var = tk.BooleanVar(value=bool(self.cfg.get("rd_autostart", True)))
         self.rdtray_var = tk.BooleanVar(value=bool(self.cfg.get("rd_to_tray", True)))
         self.rdexe_var = tk.StringVar(value=self.cfg.get("raidrive_exe", "") or "")
-        self.iphone_on_var = tk.BooleanVar(value=bool(self.cfg.get("iphone_on", True)))
         self.iphone_dir_var = tk.StringVar(value=self.cfg.get("iphone_dir") or default_iphone_dir())
         self.thr_var = tk.IntVar(value=int(self.cfg.get("copy_threads", 4) or 4))
         self.rdmin_var = tk.IntVar(value=int(self.cfg.get("rd_check_min", 2) or 0))
@@ -4736,12 +4741,13 @@ class App(tk.Tk):
         tray_state = "normal" if TRAY_OK else "disabled"
         g.check("Bấm X thì thu nhỏ xuống khay hệ thống (góc đồng hồ)", self.tray_var, tray_state)
         g.check("Thông báo Windows khi có file mới / tải xong / lỗi", self.notify_var, tray_state)
-        g.section("Copy & Save", "Đích đến đặt riêng cho từng thư mục ở tab Thư mục phim. Copy về HDD: copy 1 luồng từ "
-                                 "ổ RaiDrive. Save My PikPak: rclone (tài khoản của bạn) upload bản đã copy về HDD, "
-                                 "chạy nền song song với file kế tiếp.")
-        g.check("Copy thêm 1 bản vào thư mục COPY TO IPHONE (mọi thư mục phim)", self.iphone_on_var)
-        g.entry("Thư mục COPY TO IPHONE", self.iphone_dir_var, self._browse_iphone,
-                hint="Mỗi tập tải xong được copy thêm 1 bản vào đây (không chia thư mục con) để chép sang iPhone.")
+        g.section("Cách tải", "1) Tải từ ổ RaiDrive vào thư mục COPY TO IPHONE (mọi phim chung 1 chỗ, không chia "
+                              "thư mục con - dễ chép sang iPhone).  2) rclone (tài khoản của bạn) up bản trong COPY TO "
+                              "IPHONE lên My PikPak, chạy nền.  3) Cùng lúc copy sang HDD theo thư mục đích đặt ở tab "
+                              "Thư mục phim (bắt buộc).  File trong COPY TO IPHONE được giữ nguyên - bạn tự xóa sau khi "
+                              "chép sang iPhone, tool không tải lại.")
+        g.entry("Thư mục COPY TO IPHONE (tải về)", self.iphone_dir_var, self._browse_iphone,
+                hint="Thư mục tải về đầu tiên. Nên để trên ổ SSD (ổ C) cho nhanh.")
         g.entry("Giới hạn tốc độ upload", self.bw_var, width=12,
                 hint="VD 20M = 20 MB/s, 500K = 500 KB/s. Để trống = không giới hạn (áp dụng cho rclone upload My PikPak).")
         g.spin("Nghỉ giữa 2 file (giây)", self.delay_var, 0, 60)
@@ -5728,13 +5734,23 @@ class App(tk.Tk):
                 "skip": "—"}.get(
             u, h.get("upload_msg", "") if u == "uploading" else "")
 
+    @staticmethod
+    def _up_file(h):
+        """File để upload My PikPak: bản trong COPY TO IPHONE (nếu còn), không thì bản trên HDD."""
+        for k in ("up_path", "path", "hdd"):
+            pth = h.get(k) or ""
+            if pth and os.path.isfile(pth):
+                return pth
+        return ""
+
     def enqueue_upload(self, code, force=False):
         h = self.history.get(code)
         if not h:
             return False
         if h.get("upload") in ("pending", "uploading") or (h.get("upload") in ("done", "skip") and not force):
             return False
-        if code in self.up_queued or not (h.get("remote_src") or (h.get("path") and os.path.isfile(h["path"]))):
+        src = self._up_file(h)
+        if code in self.up_queued or not (h.get("remote_src") or src):
             return False
         h["upload"] = "pending"
         h.pop("upload_msg", None)
@@ -5771,7 +5787,7 @@ class App(tk.Tk):
                 continue
             try:
                 h = dict(self.history.get(code, {}))
-                path = h.get("path", "")
+                path = self._up_file(h)
                 rsrc = h.get("remote_src", "")
                 if not rsrc and (not path or not os.path.isfile(path)):
                     self.q.put(("upload", code, "error", "Không thấy file trên máy"))
@@ -5939,7 +5955,6 @@ class App(tk.Tk):
             self.cfg["dl_method"] = "copy"
             self.cfg["extensions"] = self.ext_var.get().strip()
             self.cfg["bwlimit"] = re.sub(r"\s+", "", self.bw_var.get())
-            self.cfg["iphone_on"] = self.iphone_on_var.get()
             self.cfg["rd_autostart"] = self.rdauto_var.get()
             self.cfg["rd_to_tray"] = self.rdtray_var.get()
             self.cfg["raidrive_exe"] = self.rdexe_var.get().strip()

@@ -1,17 +1,18 @@
-AUTO DOWNLOAD - PIKPAK v3.2 by Duy Anh - HƯỚNG DẪN
+AUTO DOWNLOAD - PIKPAK v3.3 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
    Mỗi "thư mục phim" gồm:  NGUỒN  ->  ĐÍCH ĐẾN
    - Nguồn: link chia sẻ PikPak (mypikpak.com/s/...) hoặc thư mục trên ổ RaiDrive = WebDAV PikPak của NGƯỜI CHIA SẺ
      (VD Z:\Update HH3D kimngonx5)
-   - Đích HDD (copy):      VD D:\DOWNLOAD HH3D\<Tên phim>\   (copy 1 luồng từ ổ RaiDrive)
-   - Đích My PikPak (save): VD My Pack/2026/<Tên phim>/   (rclone - tài khoản CỦA BẠN - upload bản đã copy về HDD,
-                                                           chạy nền song song với file kế tiếp)
-   - COPY TO IPHONE: mỗi tập tải xong copy thêm 1 bản vào C:\Users\<tên>\Downloads\Video\COPY TO IPHONE
-     (bật/tắt, đổi thư mục: Cài đặt > Chung > Copy & Save).
+   - Đích HDD (bắt buộc):  VD O:\3 - DOWNLOAD HH3D\<Tên phim>\
+   - Đích My PikPak:       VD My Pack/2026/<Tên phim>/   (rclone - tài khoản CỦA BẠN)
    - RaiDrive chưa mở thì tool tự mở RaiDrive khi khởi động rồi thu nhỏ RaiDrive xuống khay (Cài đặt > RaiDrive).
-   Tool quét nguồn, chỉ lấy tập CHƯA có trong "Danh sách đã có" -> copy về HDD -> upload My PikPak
+   CÁCH TẢI MỖI TẬP:
+     1) Tải từ ổ RaiDrive vào C:\Users\<tên>\Downloads\Video\COPY TO IPHONE
+        (mọi phim chung 1 chỗ, không chia thư mục con - dễ chép sang iPhone; đổi thư mục: Cài đặt > Chung).
+     2) rclone up bản trong COPY TO IPHONE lên My PikPak (chạy nền)  +  cùng lúc copy sang thư mục đích HDD.
+     3) File trong COPY TO IPHONE được giữ nguyên - bạn tự xóa sau khi chép sang iPhone, tool không tải lại.
    -> thêm vào Danh sách đã có để lần sau không tải lại.
 
 LẦN ĐẦU
