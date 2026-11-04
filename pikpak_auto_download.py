@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v2.8 by Duy Anh
+Auto Download - PikPak v2.9 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v2.8 by Duy Anh"
+APP_VERSION = "v2.9 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -183,6 +183,7 @@ DEFAULT_CONFIG = {
     "rd_check_min": 2,            # kiểm tra trạng thái RaiDrive mỗi N phút (0 = tắt)
     "rd_autostart": True,         # mở tool mà RaiDrive chưa chạy -> tự mở RaiDrive
     "raidrive_exe": "",           # đường dẫn RaiDrive.exe (trống = tự tìm)
+    "rd_to_tray": True,           # tự mở RaiDrive xong thì thu nhỏ cửa sổ RaiDrive xuống khay
     "iphone_on": True,            # copy thêm 1 bản vào thư mục COPY TO IPHONE
     "iphone_dir": default_iphone_dir(),
     "folders": [{"id": "hh3dkimngo", "name": "Update HH3D kimngonx5", "url": "@RD@\\Update HH3D kimngonx5",
@@ -656,6 +657,58 @@ def raidrive_running():
         return "raidrive.exe" in out.lower()
     except Exception:
         return None
+
+
+def hide_raidrive_windows(timeout=40, settle=6):
+    """Ẩn cửa sổ RaiDrive.exe (thu xuống khay - biểu tượng RaiDrive vẫn ở góc đồng hồ).
+    Chờ tối đa `timeout` giây cho cửa sổ hiện ra; sau lần ẩn đầu tiên canh thêm `settle` giây
+    (RaiDrive có thể hiện màn hình chờ rồi mới tới cửa sổ chính). Trả về số cửa sổ đã ẩn."""
+    if os.name != "nt":
+        return 0
+    import ctypes
+    from ctypes import wintypes
+    user32, k32 = ctypes.windll.user32, ctypes.windll.kernel32
+    names = {}
+
+    def proc_name(pid):
+        if pid in names:
+            return names[pid]
+        n = ""
+        h = k32.OpenProcess(0x1000, False, pid)        # PROCESS_QUERY_LIMITED_INFORMATION
+        if h:
+            try:
+                buf = ctypes.create_unicode_buffer(1024)
+                size = wintypes.DWORD(1024)
+                if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
+                    n = os.path.basename(buf.value).lower()
+            finally:
+                k32.CloseHandle(h)
+        names[pid] = n
+        return n
+
+    found = []
+    proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def cb(hwnd, _l):
+        if user32.IsWindowVisible(hwnd) and user32.GetWindowTextLengthW(hwnd) > 0 and not user32.GetWindow(hwnd, 4):
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if proc_name(pid.value) == "raidrive.exe":
+                found.append(hwnd)
+        return True
+    enum_cb = proto(cb)
+    hidden, t0, first = 0, time.time(), None
+    while time.time() - t0 < timeout:
+        found.clear()
+        user32.EnumWindows(enum_cb, 0)
+        for hwnd in found:
+            user32.ShowWindow(hwnd, 0)                 # SW_HIDE
+            hidden += 1
+            first = first or time.time()
+        if first and time.time() - first > settle:
+            break
+        time.sleep(0.5)
+    return hidden
 
 
 def find_raidrive_exe(custom=""):
@@ -4417,6 +4470,7 @@ class App(tk.Tk):
         self.ext_var = tk.StringVar(value=self.cfg.get("extensions", ""))
         self.bw_var = tk.StringVar(value=str(self.cfg.get("bwlimit", "") or ""))
         self.rdauto_var = tk.BooleanVar(value=bool(self.cfg.get("rd_autostart", True)))
+        self.rdtray_var = tk.BooleanVar(value=bool(self.cfg.get("rd_to_tray", True)))
         self.rdexe_var = tk.StringVar(value=self.cfg.get("raidrive_exe", "") or "")
         self.iphone_on_var = tk.BooleanVar(value=bool(self.cfg.get("iphone_on", True)))
         self.iphone_dir_var = tk.StringVar(value=self.cfg.get("iphone_dir") or default_iphone_dir())
@@ -4595,6 +4649,7 @@ class App(tk.Tk):
                               "không phụ thuộc ký tự ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
         g.entry("Ổ RaiDrive", self.rd_var, self._browse_rd, width=14)
         g.check("Mở tool mà RaiDrive chưa chạy thì tự mở RaiDrive (và chờ ổ kết nối)", self.rdauto_var)
+        g.check("Tự mở RaiDrive xong thì thu nhỏ RaiDrive xuống khay hệ thống", self.rdtray_var)
         g.entry("RaiDrive.exe", self.rdexe_var, self._browse_rd_exe,
                 hint="Để trống = tự tìm. Đang dùng: " + (find_raidrive_exe(self.cfg.get("raidrive_exe", "")) or
                                                           "chưa tìm thấy - bấm Chọn... để chỉ đến RaiDrive.exe"))
@@ -4939,6 +4994,14 @@ class App(tk.Tk):
             self.log(f"⚠ Không mở được RaiDrive ({exe}): {e}")
             return False
         self.log("▣ RaiDrive chưa mở - đã tự mở RaiDrive, chờ ổ kết nối...")
+        if cfg.get("rd_to_tray", True):
+            def _tray():
+                try:
+                    if hide_raidrive_windows():
+                        self.log("▣ Đã thu nhỏ RaiDrive xuống khay hệ thống.")
+                except Exception as e:
+                    self.log(f"⚠ Không thu nhỏ được RaiDrive xuống khay: {e}")
+            threading.Thread(target=_tray, daemon=True).start()
         self.q.put(("status", "Đang mở RaiDrive, chờ ổ kết nối..."))
         t0 = time.time()
         while time.time() - t0 < wait:
@@ -5726,6 +5789,7 @@ class App(tk.Tk):
             self.cfg["bwlimit"] = re.sub(r"\s+", "", self.bw_var.get())
             self.cfg["iphone_on"] = self.iphone_on_var.get()
             self.cfg["rd_autostart"] = self.rdauto_var.get()
+            self.cfg["rd_to_tray"] = self.rdtray_var.get()
             self.cfg["raidrive_exe"] = self.rdexe_var.get().strip()
             self.cfg["iphone_dir"] = self.iphone_dir_var.get().strip() or default_iphone_dir()
             self.cfg["copy_threads"] = 1

@@ -1,6 +1,10 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.9  (04/11/2026)
+  - Tool tự mở RaiDrive xong thì thu nhỏ cửa sổ RaiDrive xuống khay hệ thống (biểu tượng ở góc đồng hồ).
+    Bật/tắt ở Cài đặt > RaiDrive.
+
 v2.8  (04/11/2026)
   - Giao diện mới tươi sáng: nền trắng, nút tím violet, thanh bên tím đậm, số liệu có màu.
   - Bảng tiến trình ở tab Quét & Tải: % + thanh năng lượng cho file đang tải, upload My PikPak và tổng đợt.
