@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v2.7 by Duy Anh
+Auto Download - PikPak v2.8 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v2.7 by Duy Anh"
+APP_VERSION = "v2.8 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -77,7 +77,7 @@ BACKUP_DIR = "_Backup PikPakAutoDownload"
 EXE_NAME = "Auto Download - PikPak.exe"          # tên file exe (từ v2.6)
 OLD_EXE_NAMES = ("PikPakAutoDownload.exe",)       # tên exe cũ (<= v2.5)
 MACHINE = (os.environ.get("COMPUTERNAME") or "").strip() or __import__("socket").gethostname()
-PATH_KEYS = ("raidrive_root", "iphone_dir")
+PATH_KEYS = ("raidrive_root", "iphone_dir", "raidrive_exe")
 MACHINE_KEYS = PATH_KEYS + ("rd_remote_base", "start_with_windows")
 LOG_FILE = DATA_DIR / "log.txt"
 
@@ -102,37 +102,37 @@ STALE_FOLDER_DAYS = 14        # thư mục 14 ngày không có tập mới -> c�
 CATCHUP_MAX_DAYS = 14         # quét bù tối đa 14 ngày khi tool không chạy
 WATCH_STATUSES = (STATUS_OPENED, STATUS_DL)
 
-# ----- màu giao diện (v2.0: Industrial - than chì + cam hổ phách)
-C_BG = "#0d1014"             # nền cửa sổ
-C_CARD = "#151a20"           # khung nội dung
-C_PANEL = "#1b2129"          # ô / bảng điều khiển bên trong
-C_FIELD = "#0f1318"          # ô nhập
-C_ACCENT = "#f5a524"         # cam hổ phách (đèn báo máy)
-C_ACCENT_HOVER = "#ffb84d"
-C_ACCENT_DIS = "#5a4520"
-C_ON_ACCENT = "#14110a"      # chữ trên nút cam
-C_SOFT = "#1a2028"           # nền thanh công cụ
-C_SOFT_BORDER = "#2a323c"
-C_SEL = "#2b3542"            # dòng đang chọn
-C_HEAD = "#1a2027"           # tiêu đề bảng
-C_ODD = "#181d24"            # dòng lẻ
-C_TEXT = "#e4e8ec"
-C_MUTED = "#8b96a3"
-C_BORDER = "#29313b"
-C_GREEN = "#3ddc84"
-C_ORANGE = "#f5a524"
-C_RED = "#ff5c5c"
-C_BLUE = "#4cc9f0"           # "mới" - xanh cyan
-C_WARN_BG = "#2a2013"
-C_SIDE = "#090b0e"
-C_SIDE_CARD = "#11151a"
-C_SIDE_HOVER = "#1a1f26"
-C_SIDE_ACTIVE = "#f5a524"
+# ----- màu giao diện (v2.8: Tươi sáng - tím violet + trắng, thanh bên tím đậm)
+C_BG = "#eef1f8"             # nền cửa sổ
+C_CARD = "#ffffff"           # khung nội dung
+C_PANEL = "#f5f7fc"          # ô / bảng điều khiển bên trong
+C_FIELD = "#ffffff"          # ô nhập
+C_ACCENT = "#6c4cff"         # tím violet tươi
+C_ACCENT_HOVER = "#5a38f5"
+C_ACCENT_DIS = "#cfc6ff"
+C_ON_ACCENT = "#ffffff"      # chữ trên nút tím
+C_SOFT = "#f3f0ff"           # nền thanh công cụ
+C_SOFT_BORDER = "#ddd5ff"
+C_SEL = "#e7e1ff"            # dòng đang chọn
+C_HEAD = "#f3f0ff"           # tiêu đề bảng
+C_ODD = "#fafbfe"            # dòng lẻ
+C_TEXT = "#1e2235"
+C_MUTED = "#6b7390"
+C_BORDER = "#e1e5f0"
+C_GREEN = "#10b981"
+C_ORANGE = "#f59e0b"
+C_RED = "#ef4444"
+C_BLUE = "#0ea5e9"           # "mới" - xanh cyan
+C_WARN_BG = "#fff6e0"
+C_SIDE = "#2d1b8a"
+C_SIDE_CARD = "#3a28a0"
+C_SIDE_HOVER = "#4a36b8"
+C_SIDE_ACTIVE = "#ffd166"
 SIDE_W = 430          # thanh bên trái (mở rộng)
 SIDE_W_MINI = 64      # thanh bên trái (thu gọn)
 SIDE_MIN, SIDE_MAX = 240, 700   # giới hạn khi kéo đổi độ rộng
-C_SIDE_TEXT = "#c9d1d9"
-C_SIDE_MUTED = "#5f6b78"
+C_SIDE_TEXT = "#f2efff"
+C_SIDE_MUTED = "#b4a9e8"
 FONT = "Segoe UI"
 MONO = "Consolas"             # số liệu kiểu màn hình máy
 
@@ -181,6 +181,8 @@ DEFAULT_CONFIG = {
     "extensions": ".mkv .mp4 .avi .ts .m4v .mov",
     "bwlimit": "",                # giới hạn tốc độ rclone, VD 20M (trống = không giới hạn)
     "rd_check_min": 2,            # kiểm tra trạng thái RaiDrive mỗi N phút (0 = tắt)
+    "rd_autostart": True,         # mở tool mà RaiDrive chưa chạy -> tự mở RaiDrive
+    "raidrive_exe": "",           # đường dẫn RaiDrive.exe (trống = tự tìm)
     "iphone_on": True,            # copy thêm 1 bản vào thư mục COPY TO IPHONE
     "iphone_dir": default_iphone_dir(),
     "folders": [{"id": "hh3dkimngo", "name": "Update HH3D kimngonx5", "url": "@RD@\\Update HH3D kimngonx5",
@@ -642,6 +644,72 @@ def rd_root(cfg):
     if r and len(r) == 2 and r[1] == ":":
         r += os.sep
     return r
+
+
+def raidrive_running():
+    """RaiDrive.exe (ứng dụng, không tính dịch vụ RaiDrive.Service) có đang chạy không. None = không biết."""
+    if os.name != "nt":
+        return None
+    try:
+        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RaiDrive.exe", "/NH"], capture_output=True, text=True,
+                             creationflags=subprocess.CREATE_NO_WINDOW, timeout=15).stdout
+        return "raidrive.exe" in out.lower()
+    except Exception:
+        return None
+
+
+def find_raidrive_exe(custom=""):
+    """Tìm RaiDrive.exe: đường dẫn tự chọn -> thư mục cài đặt thường gặp -> registry."""
+    custom = from_portable(str(custom or "").strip())
+    if custom and os.path.isfile(custom):
+        return custom
+    if os.name != "nt":
+        return ""
+    env = os.environ.get
+    bases = [env("ProgramFiles", r"C:\Program Files"), env("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+             env("ProgramW6432", ""), os.path.join(env("LOCALAPPDATA", ""), "Programs")]
+    for b in bases:
+        if not b:
+            continue
+        for sub in (r"RaiDrive\RaiDrive.exe", r"OpenBoxLab\RaiDrive\RaiDrive.exe"):
+            c = os.path.join(b, sub)
+            if os.path.isfile(c):
+                return c
+    try:
+        import winreg
+        for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            try:
+                with winreg.OpenKey(hive, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\RaiDrive.exe") as k:
+                    v = winreg.QueryValue(k, None)
+                    if v and os.path.isfile(v.strip('"')):
+                        return v.strip('"')
+            except OSError:
+                pass
+            for path in (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                         r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"):
+                try:
+                    with winreg.OpenKey(hive, path) as k:
+                        for i in range(winreg.QueryInfoKey(k)[0]):
+                            try:
+                                with winreg.OpenKey(k, winreg.EnumKey(k, i)) as sk:
+                                    name = str(winreg.QueryValueEx(sk, "DisplayName")[0])
+                                    if "raidrive" not in name.lower():
+                                        continue
+                                    for val in ("InstallLocation", "DisplayIcon"):
+                                        try:
+                                            v = str(winreg.QueryValueEx(sk, val)[0]).strip('"').split(",")[0]
+                                        except OSError:
+                                            continue
+                                        c = v if v.lower().endswith(".exe") else os.path.join(v, "RaiDrive.exe")
+                                        if os.path.isfile(c) and "uninst" not in os.path.basename(c).lower():
+                                            return c
+                            except OSError:
+                                continue
+                except OSError:
+                    pass
+    except Exception:
+        pass
+    return ""
 
 
 def to_rd(cfg, path):
@@ -1408,6 +1476,67 @@ def run_newer_script():
 
 
 # ----------------------------------------------------------------- GUI
+def ebar(pct, n=10):
+    """Thanh năng lượng dạng chữ cho cột Trạng thái: ▰▰▰▱▱▱▱▱▱▱"""
+    try:
+        pct = max(0, min(100, int(pct)))
+    except (TypeError, ValueError):
+        pct = 0
+    k = (pct * n + 50) // 100
+    return "▰" * k + "▱" * (n - k)
+
+
+def _mix(c1, c2, t):
+    a = [int(c1[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(c2[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(a, b))
+
+
+ENERGY_COLORS = ("#8b5cf6", "#6366f1", "#0ea5e9", "#06b6d4", "#10b981", "#22c55e")
+
+
+class EnergyBar(tk.Canvas):
+    """Thanh năng lượng chia ô, tô màu chuyển tím -> xanh dương -> xanh lá theo %."""
+    def __init__(self, parent, bg, height=18, seg=36, empty="#e9e6fb", colors=ENERGY_COLORS):
+        super().__init__(parent, bg=bg, height=height, highlightthickness=0, bd=0)
+        self.seg, self.empty, self.colors, self.pct = seg, empty, colors, 0
+        self.bind("<Configure>", lambda e: self._draw())
+
+    def _color(self, t):
+        cs = self.colors
+        x = t * (len(cs) - 1)
+        i = min(int(x), len(cs) - 2)
+        return _mix(cs[i], cs[i + 1], x - i)
+
+    def set(self, pct):
+        try:
+            pct = max(0.0, min(100.0, float(pct)))
+        except (TypeError, ValueError):
+            pct = 0.0
+        if abs(pct - self.pct) >= 0.5 or pct in (0.0, 100.0):
+            self.pct = pct
+            self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 20:
+            return
+        gap = 3
+        n = self.seg
+        sw = (w - gap * (n - 1)) / n
+        full = self.pct / 100 * n
+        for i in range(n):
+            x0 = i * (sw + gap)
+            fill = self._color(i / max(1, n - 1)) if i < full else self.empty
+            if i < full < i + 1:                       # ô đang nạp dở -> nhạt hơn
+                fill = _mix(self.empty, self._color(i / max(1, n - 1)), full - i)
+            self.create_rectangle(x0, 1, x0 + sw, h - 1, fill=fill, outline="")
+            if i < full:                               # vệt sáng phía trên cho có "năng lượng"
+                self.create_rectangle(x0, 1, x0 + sw, 1 + max(2, h // 4), fill=_mix(fill, "#ffffff", 0.45),
+                                      outline="")
+
+
 class App(tk.Tk):
     def __init__(self, auto=False, startup=False):
         super().__init__()
@@ -1520,6 +1649,8 @@ class App(tk.Tk):
         self.after(1500, lambda: self.check_pikpak(silent=True))
         self.after(2500, self._ask_rclone_first_run)
         self.after(1200, self._rd_tick)
+        self.after(700, lambda: threading.Thread(target=self.ensure_raidrive, kwargs={"wait": 90},
+                                                 daemon=True).start())
         self.report_callback_exception = self._tk_exception
         self.after(1600, self._show_err_badge)
         if self._new_machine:
@@ -1617,21 +1748,21 @@ class App(tk.Tk):
         st.layout("Side.TNotebook.Tab", [])
         st.configure("TButton", padding=(12, 6), background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
                      lightcolor=C_PANEL, darkcolor=C_PANEL, borderwidth=1, focusthickness=0, font=(FONT, 10))
-        st.map("TButton", background=[("active", "#252d37"), ("disabled", C_CARD)],
-               foreground=[("disabled", "#55606c")], bordercolor=[("active", C_ACCENT)])
+        st.map("TButton", background=[("active", "#ece8ff"), ("disabled", C_CARD)],
+               foreground=[("disabled", "#a8aec4")], bordercolor=[("active", C_ACCENT)])
         st.configure("Small.TButton", padding=(8, 4), font=(FONT, 9))
         for name, pad, fs in (("Accent.TButton", (14, 7), 10), ("AccentSmall.TButton", (10, 4), 9)):
             st.configure(name, background=C_ACCENT, foreground=C_ON_ACCENT, bordercolor=C_ACCENT,
                          lightcolor=C_ACCENT, darkcolor=C_ACCENT, font=(FONT, fs, "bold"), padding=pad)
             st.map(name, background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)],
-                   foreground=[("disabled", "#a08455")], bordercolor=[("active", C_ACCENT_HOVER)])
+                   foreground=[("disabled", "#ffffff")], bordercolor=[("active", C_ACCENT_HOVER)])
         st.configure("Success.TButton", background=C_ACCENT, foreground=C_ON_ACCENT, bordercolor=C_ACCENT,
                      lightcolor=C_ACCENT, darkcolor=C_ACCENT, font=(FONT, 10, "bold"), padding=(16, 7))
         st.map("Success.TButton", background=[("active", C_ACCENT_HOVER), ("disabled", C_ACCENT_DIS)])
         for name, pad, fs in (("Danger.TButton", (12, 6), 10), ("DangerSmall.TButton", (8, 4), 9)):
-            st.configure(name, background="#2a1416", foreground=C_RED, bordercolor="#4a1f22",
-                         lightcolor="#2a1416", darkcolor="#2a1416", padding=pad, font=(FONT, fs))
-            st.map(name, background=[("active", "#3a1a1d")], foreground=[("disabled", "#6b3a3d")])
+            st.configure(name, background="#fdecec", foreground=C_RED, bordercolor="#f8c4c4",
+                         lightcolor="#fdecec", darkcolor="#fdecec", padding=pad, font=(FONT, fs))
+            st.map(name, background=[("active", "#fbd5d5")], foreground=[("disabled", "#e6a3a3")])
         for name, pad in (("TEntry", 6), ("TCombobox", 5), ("TSpinbox", 4)):
             st.configure(name, fieldbackground=C_FIELD, foreground=C_TEXT, bordercolor=C_BORDER,
                          lightcolor=C_FIELD, darkcolor=C_FIELD, padding=pad, arrowsize=12, insertcolor=C_ACCENT,
@@ -1648,16 +1779,16 @@ class App(tk.Tk):
         st.map("Pro.Treeview.Heading", background=[("active", C_PANEL)], foreground=[("active", C_ACCENT)])
         st.map("Pro.Treeview", background=[("selected", C_SEL)], foreground=[("selected", C_TEXT)])
         st.layout("Pro.Treeview", [("Treeview.treearea", {"sticky": "nswe"})])
-        st.configure("Pro.Horizontal.TProgressbar", troughcolor=C_PANEL, background=C_ACCENT,
-                     bordercolor=C_PANEL, lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=6)
+        st.configure("Pro.Horizontal.TProgressbar", troughcolor="#e4e0fb", background=C_ACCENT,
+                     bordercolor="#e4e0fb", lightcolor=C_ACCENT, darkcolor=C_ACCENT, thickness=10)
         st.configure("Vertical.TScrollbar", background=C_PANEL, troughcolor=C_CARD, borderwidth=0, arrowsize=12,
                      bordercolor=C_CARD, lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED)
-        st.map("Vertical.TScrollbar", background=[("active", "#2a333e")])
+        st.map("Vertical.TScrollbar", background=[("active", "#d3d0f0")])
         st.configure("TPanedwindow", background=C_CARD)
         st.configure("Sash", sashthickness=8, gripcount=0, background=C_BORDER)
         st.configure("TMenubutton", background=C_PANEL, foreground=C_TEXT, bordercolor=C_BORDER,
                      lightcolor=C_PANEL, darkcolor=C_PANEL, arrowcolor=C_MUTED, padding=(10, 5))
-        st.map("TMenubutton", background=[("active", "#252d37")])
+        st.map("TMenubutton", background=[("active", "#ece8ff")])
 
     def _tree(self, parent, cols, heads, widths, anchors=None, height=12, check=False, stretch=None):
         wrap = ttk.Frame(parent, style="Card.TFrame")
@@ -1682,7 +1813,7 @@ class App(tk.Tk):
         tree.tag_configure("dl", foreground=C_ORANGE)
         tree.tag_configure("done", foreground=C_GREEN)
         tree.tag_configure("err", foreground=C_RED)
-        tree.tag_configure("skip", foreground="#5f6b78")
+        tree.tag_configure("skip", foreground="#9aa1b8")
         return wrap, tree
 
     def _build_sidebar(self, parent):
@@ -1702,7 +1833,7 @@ class App(tk.Tk):
             tk.Label(self.side_brand, image=self.icon_small, bg=C_SIDE).pack(side="left", padx=(0, 10))
         bt = tk.Frame(self.side_brand, bg=C_SIDE)
         bt.pack(side="left")
-        tk.Label(bt, text=APP_TITLE.upper(), bg=C_SIDE, fg=C_TEXT, font=(FONT, 11, "bold")).pack(anchor="w")
+        tk.Label(bt, text=APP_TITLE.upper(), bg=C_SIDE, fg="#ffffff", font=(FONT, 11, "bold")).pack(anchor="w")
         tk.Label(bt, text=APP_VERSION, bg=C_SIDE,
                  fg=C_SIDE_MUTED, font=(FONT, 8)).pack(anchor="w")
         self.side_toggle = tk.Label(top, text="«", bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 15, "bold"),
@@ -1781,7 +1912,7 @@ class App(tk.Tk):
         self.side_bk = tk.Label(ck, text="", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9), anchor="w",
                                 justify="left", wraplength=W)
         self.side_bk.pack(fill="x")
-        self.side_err = tk.Label(ck, text="", bg="#2a1416", fg=C_RED, font=(FONT, 9, "bold"), anchor="w",
+        self.side_err = tk.Label(ck, text="", bg="#7a1f4a", fg="#ffd6e0", font=(FONT, 9, "bold"), anchor="w",
                                  justify="left", wraplength=W, cursor="hand2", padx=6, pady=4)
         self.side_err.bind("<Button-1>", self.copy_last_report)
         self.side_health = tk.Label(ck, text="", bg=C_SIDE_CARD, fg="#fca5a5", font=(FONT, 9, "bold"), anchor="w",
@@ -1791,7 +1922,7 @@ class App(tk.Tk):
         tk.Label(ck, text=f"⌂ Máy: {MACHINE}", bg=C_SIDE_CARD, fg=C_SIDE_MUTED, font=(FONT, 9),
                  anchor="w").pack(fill="x", pady=(2, 0))
         self.side_foot = tk.Label(bottom, text="",
-                                  bg=C_SIDE, fg="#4b5561", font=(FONT, 8), anchor="w", justify="left", wraplength=W)
+                                  bg=C_SIDE, fg="#9d90de", font=(FONT, 8), anchor="w", justify="left", wraplength=W)
         self._side_wraps = [self.side_rd, self.side_owned, self.side_last, self.side_pk, self.side_bk, self.side_foot, self.side_health, self.side_err]
         # vạch kéo đổi độ rộng thanh bên
         grip = tk.Frame(parent, bg=C_BORDER, width=5, cursor="sb_h_double_arrow")
@@ -2552,7 +2683,7 @@ class App(tk.Tk):
         cards = ttk.Frame(self.tab_scan, style="Card.TFrame")
         cards.pack(fill="x")
         self.stat_vars = {}
-        for i, (key, title, color, glyph) in enumerate((("folders", "Thư mục sẽ quét", "#0f766e", "▦"),
+        for i, (key, title, color, glyph) in enumerate((("folders", "Thư mục sẽ quét", "#14b8a6", "▦"),
                                                  ("new", "File mới chưa có", C_BLUE, "●"),
                                                  ("dl", "Đang tải", C_ORANGE, "⬇"),
                                                  ("owned", "Danh sách đã có", C_GREEN, "✔"))):
@@ -2561,8 +2692,9 @@ class App(tk.Tk):
             cards.columnconfigure(i, weight=1)
             self.stat_vars[key] = var
 
+        self._build_energy(self.tab_scan)
         bar = ttk.Frame(self.tab_scan, style="Card.TFrame")
-        bar.pack(fill="x", pady=(14, 10))
+        bar.pack(fill="x", pady=(12, 10))
         ttk.Label(bar, text="Chỉ hiện những file CHƯA có trong Danh sách đã có (thư mục chưa duyệt sẽ không tự tải).",
                   style="Muted.TLabel").pack(side="left")
         self.btn_stop = ttk.Button(bar, text="■  Dừng", style="Danger.TButton", command=self.stop_flag.set,
@@ -2625,7 +2757,7 @@ class App(tk.Tk):
                                       "bấm tiêu đề cột để sắp xếp)", style="Muted.TLabel").pack(anchor="w", pady=(10, 4))
         lb = tk.Frame(self.tab_scan, bg=C_BORDER, padx=1, pady=1)
         lb.pack(fill="x")
-        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg="#07090c", fg="#9fe0b0",
+        self.log_box = tk.Text(lb, height=6, wrap="word", font=("Consolas", 9), bg="#1b1640", fg="#b9f6dc",
                                insertbackground="white", relief="flat", padx=10, pady=8)
         self.log_box.pack(fill="both")
 
@@ -2838,6 +2970,8 @@ class App(tk.Tk):
         uses_rd = any(str(f.get("url", "")).startswith(RD_TOKEN) for f in cfg["folders"] if f.get("enabled", True))
         uses_share = any(is_share(f.get("url", "")) for f in cfg["folders"] if f.get("enabled", True))
         root = rd_root(cfg)
+        if uses_rd and root and not os.path.isdir(root) and threading.current_thread() is not threading.main_thread():
+            self.ensure_raidrive(wait=60)          # RaiDrive chưa mở -> tự mở rồi chờ ổ kết nối
         if uses_rd and (not root or not os.path.isdir(root)):
             probs.append(f"Không thấy ổ RaiDrive {root or '(chưa đặt)'} - mở RaiDrive và kết nối ổ PikPak.")
         r = find_rclone()
@@ -3275,12 +3409,15 @@ class App(tk.Tk):
                     "status": STATUS_DL, "src": meta, "error": ""})
         self.q.put(("hist", fcode, dict(rec)))
         last = [0.0, -1]
+        phase = ["⬇", "Đang tải"]
 
         def prog(pct, speed=""):
-            if pct != last[1] and time.time() - last[0] > 0.7:
+            if pct != last[1] and (time.time() - last[0] > 0.5 or pct >= 100):
                 last[0], last[1] = time.time(), pct
-                self.q.put(("rowstatus", fcode, f"⬇  {pct:>3}%   {speed}", "dl"))
-                self.q.put(("status", f"Đang tải {name}: {pct}%  {speed}"))
+                self.q.put(("rowstatus", fcode, f"{phase[0]} {ebar(pct)} {pct:>3}%   {speed}", "dl"))
+                self.q.put(("status", f"{phase[1]} {name}: {pct}%  {speed}"))
+                self.q.put(("energy", "dl", pct, f"{phase[0]} {name}   {speed}".rstrip()))
+        self.q.put(("energy", "dl", 0, f"⬇ {name}"))
 
         rclone = find_rclone()
         remote = cfg.get("pikpak_remote", "pikpak") or "pikpak"
@@ -3368,6 +3505,8 @@ class App(tk.Tk):
                                                    "đưa vào danh sách tải lại")
                 return False
             self.log(f"→ Đã copy về HDD: {dst}")
+        phase[:] = ["📱", "Copy vào COPY TO IPHONE"]
+        last[1] = -1
         self._copy_to_iphone(item, fcode, name, dst or meta.get("path") or "", size, prog)
         if pk_thread is not None:
             if pk_thread.is_alive():
@@ -3383,8 +3522,9 @@ class App(tk.Tk):
                 and meta.get("path") and os.path.isfile(meta["path"]):
             target = f"{remote}:{pikpak_join(pk_dir, name)}"
             self.q.put(("rowstatus", fcode, "☁  Đang upload lên My PikPak...", "dl"))
-            ok_up, msg_up = rclone_copy(rclone, meta["path"], target, lambda p, sp="": self.q.put(
-                ("rowstatus", fcode, f"☁  ↑ {p:>3}%  {sp}", "dl")), self.stop_flag, extra)
+            ok_up, msg_up = rclone_copy(rclone, meta["path"], target, lambda p, sp="": (self.q.put(
+                ("rowstatus", fcode, f"☁ {ebar(p)} {p:>3}%  {sp}", "dl")), self.q.put(
+                ("energy", "up", p, f"↑ {name}   {sp}".rstrip()))), self.stop_flag, extra)
             if ok_up:
                 saved = target
             else:
@@ -3478,6 +3618,11 @@ class App(tk.Tk):
                     self.status_var.set(msg[1])
                 elif kind == "progress":
                     self.progress.config(maximum=max(1, msg[2]), value=msg[1])
+                    self._batch = (msg[1], msg[2])
+                    self._dl_pct = 0
+                    self._energy_total()
+                elif kind == "energy":
+                    self._energy_set(msg[1], msg[2], msg[3] if len(msg) > 3 else None)
                 elif kind == "row":
                     _, iid, values, tag = msg[:4]
                     self.scan_items[iid] = msg[4]
@@ -3609,6 +3754,11 @@ class App(tk.Tk):
                         return
                 elif kind == "done":
                     self.status_var.set(msg[1])
+                    try:
+                        if self.energy["dl"][1].get() not in ("—",):
+                            self.energy["dl"][1].set("✔ " + str(msg[1]).strip())
+                    except (AttributeError, KeyError):
+                        pass
                     for b in (self.btn_scan, self.btn_go):
                         b.config(state="normal")
                     self.btn_stop.config(state="disabled")
@@ -3748,7 +3898,7 @@ class App(tk.Tk):
         def box(checked):
             n = 18
             img = tk.PhotoImage(width=n, height=n)
-            border = C_ACCENT if checked else "#56616e"
+            border = C_ACCENT if checked else "#b8bdd4"
             fill = C_ACCENT if checked else C_FIELD
             for y in range(n):
                 row = []
@@ -3813,9 +3963,9 @@ class App(tk.Tk):
             bg = C_SIDE_HOVER if on else C_SIDE
             for w in ("row", "icon", "label"):
                 n[w].config(bg=bg)
-            n["bar"].config(bg=C_ACCENT if on else bg)
+            n["bar"].config(bg=C_SIDE_ACTIVE if on else bg)
             n["icon"].config(fg=C_SIDE_ACTIVE if on else C_SIDE_MUTED)
-            n["label"].config(fg=C_ACCENT if on else C_SIDE_TEXT)
+            n["label"].config(fg="#ffffff" if on else C_SIDE_TEXT)
 
     def _nav_hover(self, key, inside):
         if getattr(self, "page", None) == key:
@@ -3843,10 +3993,64 @@ class App(tk.Tk):
         self.status_var = tk.StringVar(value="Sẵn sàng.")
         ttk.Label(bar, textvariable=self.status_var, style="Status.TLabel").pack(side="left")
 
+    def _build_energy(self, parent):
+        """Bảng tiến trình: % + thanh năng lượng cho file đang tải, upload My PikPak và tổng đợt."""
+        box = tk.Frame(parent, bg=C_PANEL, highlightbackground=C_BORDER, highlightthickness=1)
+        box.pack(fill="x", pady=(12, 0))
+        inner = tk.Frame(box, bg=C_PANEL, padx=14, pady=10)
+        inner.pack(fill="x")
+        inner.columnconfigure(2, weight=1)
+        self.energy = {}
+        for r, (key, icon, title, color) in enumerate((("dl", "⬇", "TẢI VỀ", C_ACCENT),
+                                                      ("up", "☁", "MY PIKPAK", C_BLUE),
+                                                      ("all", "Σ", "TỔNG ĐỢT", C_GREEN))):
+            tk.Label(inner, text=f"{icon}  {title}", bg=C_PANEL, fg=color, font=(FONT, 9, "bold"), width=12,
+                     anchor="w").grid(row=r, column=0, sticky="w", pady=4)
+            info = tk.StringVar(value="—")
+            tk.Label(inner, textvariable=info, bg=C_PANEL, fg=C_MUTED, font=(FONT, 9), width=44, anchor="w"
+                     ).grid(row=r, column=1, sticky="w", padx=(0, 10))
+            bar = EnergyBar(inner, C_PANEL, height=20 if key == "dl" else 14, seg=40 if key == "dl" else 30)
+            bar.grid(row=r, column=2, sticky="we", pady=4)
+            pct = tk.StringVar(value="0%")
+            tk.Label(inner, textvariable=pct, bg=C_PANEL, fg=color, font=(MONO, 15 if key == "dl" else 11, "bold"),
+                     width=5, anchor="e").grid(row=r, column=3, sticky="e", padx=(10, 0))
+            self.energy[key] = (bar, info, pct)
+        self._batch = (0, 0)
+        self._dl_pct = 0
+
+    def _energy_set(self, key, pct, info=None):
+        try:
+            bar, iv, pv = self.energy[key]
+        except (AttributeError, KeyError):
+            return
+        try:
+            pct = max(0, min(100, int(round(float(pct)))))
+        except (TypeError, ValueError):
+            pct = 0
+        bar.set(pct)
+        pv.set(f"{pct}%")
+        if info is not None:
+            info = str(info)
+            iv.set(info if len(info) <= 60 else info[:57] + "...")
+        if key == "dl":
+            self._dl_pct = pct
+            self._energy_total()
+
+    def _energy_total(self):
+        done, n = getattr(self, "_batch", (0, 0))
+        if not n:
+            return
+        cur = self._dl_pct if done < n else 0
+        tot = min(100, (done + cur / 100) / n * 100)
+        bar, iv, pv = self.energy["all"]
+        bar.set(tot)
+        pv.set(f"{int(tot)}%")
+        iv.set(f"{min(done + (1 if done < n else 0), n)} / {n}")
+
     def _stat_card(self, parent, title, color, glyph=""):
         """Thẻ số liệu kiểu đồng hồ máy: nhãn nhỏ in hoa, số lớn font màn hình, vạch màu + đèn báo."""
         card = tk.Frame(parent, bg=C_PANEL, highlightbackground=C_BORDER, highlightthickness=1)
-        tk.Frame(card, bg=color, width=3).pack(side="left", fill="y")
+        tk.Frame(card, bg=color, width=5).pack(side="left", fill="y")
         body = tk.Frame(card, bg=C_PANEL, padx=14, pady=10)
         body.pack(side="left", fill="both", expand=True)
         var = tk.StringVar(value="0")
@@ -3855,8 +4059,8 @@ class App(tk.Tk):
         tk.Label(top, text="●", bg=C_PANEL, fg=color, font=(FONT, 8)).pack(side="left")
         tk.Label(top, text="  " + title.upper(), bg=C_PANEL, fg=C_MUTED, font=(FONT, 8, "bold")).pack(side="left")
         if glyph:
-            tk.Label(top, text=glyph, bg=C_PANEL, fg="#3a4450", font=(FONT, 12)).pack(side="right")
-        tk.Label(body, textvariable=var, bg=C_PANEL, fg=C_TEXT, font=(MONO, 22, "bold")).pack(anchor="w", pady=(2, 0))
+            tk.Label(top, text=glyph, bg=C_PANEL, fg="#c3bdf0", font=(FONT, 12)).pack(side="right")
+        tk.Label(body, textvariable=var, bg=C_PANEL, fg=color, font=(MONO, 22, "bold")).pack(anchor="w", pady=(2, 0))
         return card, var
 
     def _apply_scan_filter(self):
@@ -4212,6 +4416,8 @@ class App(tk.Tk):
         self.delay_var = tk.IntVar(value=int(self.cfg.get("delay", 2)))
         self.ext_var = tk.StringVar(value=self.cfg.get("extensions", ""))
         self.bw_var = tk.StringVar(value=str(self.cfg.get("bwlimit", "") or ""))
+        self.rdauto_var = tk.BooleanVar(value=bool(self.cfg.get("rd_autostart", True)))
+        self.rdexe_var = tk.StringVar(value=self.cfg.get("raidrive_exe", "") or "")
         self.iphone_on_var = tk.BooleanVar(value=bool(self.cfg.get("iphone_on", True)))
         self.iphone_dir_var = tk.StringVar(value=self.cfg.get("iphone_dir") or default_iphone_dir())
         self.thr_var = tk.IntVar(value=int(self.cfg.get("copy_threads", 4) or 4))
@@ -4388,6 +4594,10 @@ class App(tk.Tk):
         g.section("Cấu hình", "Ổ RaiDrive mount WebDAV PikPak của người chia sẻ. Thư mục nguồn chọn trên ổ này được lưu "
                               "không phụ thuộc ký tự ổ - máy khác chỉ cần đặt đúng ổ của máy đó.")
         g.entry("Ổ RaiDrive", self.rd_var, self._browse_rd, width=14)
+        g.check("Mở tool mà RaiDrive chưa chạy thì tự mở RaiDrive (và chờ ổ kết nối)", self.rdauto_var)
+        g.entry("RaiDrive.exe", self.rdexe_var, self._browse_rd_exe,
+                hint="Để trống = tự tìm. Đang dùng: " + (find_raidrive_exe(self.cfg.get("raidrive_exe", "")) or
+                                                          "chưa tìm thấy - bấm Chọn... để chỉ đến RaiDrive.exe"))
         g.spin("Tự kiểm tra ổ mỗi (phút, 0 = tắt)", self.rdmin_var, 0, 60)
 
         # ----- 4. rclone
@@ -4656,14 +4866,7 @@ class App(tk.Tk):
         def job():
             root = rd_root(cfg)
             info = {"checked": f"{dt.datetime.now():%H:%M:%S %d/%m}"}
-            app_on = None
-            if os.name == "nt":
-                try:
-                    out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RaiDrive*", "/NH"], capture_output=True,
-                                         text=True, creationflags=subprocess.CREATE_NO_WINDOW, timeout=15).stdout
-                    app_on = "raidrive" in out.lower()
-                except Exception:
-                    app_on = None
+            app_on = raidrive_running()
             info["app"] = {True: "✔ đang chạy", False: "✘ không chạy - mở RaiDrive", None: "—"}[app_on]
             ok = False
             if not root:
@@ -4714,6 +4917,46 @@ class App(tk.Tk):
             self.notify("⚠ Mất kết nối ổ RaiDrive", info.get("state", ""))
         if not silent:
             self.log("RaiDrive: " + info.get("state", ""))
+
+    def ensure_raidrive(self, wait=90):
+        """Chạy nền: thư mục phim dùng ổ RaiDrive mà RaiDrive.exe chưa mở -> tự mở RaiDrive, chờ ổ kết nối."""
+        cfg = self.cfg
+        if not cfg.get("rd_autostart", True) or os.name != "nt":
+            return False
+        if not any(str(f.get("url", "")).startswith(RD_TOKEN) for f in cfg["folders"] if f.get("enabled", True)):
+            return False
+        root = rd_root(cfg)
+        if raidrive_running() is not False:
+            return bool(root and os.path.isdir(root))
+        exe = find_raidrive_exe(cfg.get("raidrive_exe", ""))
+        if not exe:
+            self.log("⚠ RaiDrive chưa mở và không tìm thấy RaiDrive.exe - chọn đường dẫn trong Cài đặt → RaiDrive.")
+            return False
+        try:
+            flags = 0x00000008 | 0x00000200       # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            subprocess.Popen([exe], cwd=os.path.dirname(exe), creationflags=flags, close_fds=True, env=clean_env())
+        except OSError as e:
+            self.log(f"⚠ Không mở được RaiDrive ({exe}): {e}")
+            return False
+        self.log("▣ RaiDrive chưa mở - đã tự mở RaiDrive, chờ ổ kết nối...")
+        self.q.put(("status", "Đang mở RaiDrive, chờ ổ kết nối..."))
+        t0 = time.time()
+        while time.time() - t0 < wait:
+            if root and os.path.isdir(root):
+                self.log(f"▣ Ổ RaiDrive {root} đã kết nối ({int(time.time() - t0)} giây).")
+                self.q.put(("status", "RaiDrive đã kết nối."))
+                break
+            time.sleep(2)
+        else:
+            self.log(f"⚠ Đã mở RaiDrive nhưng sau {wait} giây chưa thấy ổ {root} - kiểm tra kết nối trong RaiDrive.")
+        self.q.put(("call", lambda: self.check_raidrive(silent=True), (), {}, threading.Event()))
+        return bool(root and os.path.isdir(root))
+
+    def _browse_rd_exe(self):
+        p = filedialog.askopenfilename(title="Chọn RaiDrive.exe", filetypes=[("RaiDrive", "RaiDrive.exe"),
+                                                                              ("Chương trình", "*.exe")])
+        if p:
+            self.rdexe_var.set(os.path.normpath(p))
 
     def _rd_tick(self):
         mins = int(self.cfg.get("rd_check_min", 2) or 0)
@@ -5333,10 +5576,14 @@ class App(tk.Tk):
                     ok, msg = rclone_copy(r, rsrc, f"{dest}/{h.get('name', '')}")
                     if not ok and path and os.path.isfile(path):
                         ok, msg = rclone_copy(r, path, f"{dest}/{h.get('name', '')}",
-                                              lambda pct, sp: self.q.put(("upload", code, "uploading", f"↑  {pct}%")))
+                                              lambda pct, sp: (self.q.put(("upload", code, "uploading",
+                                                                            f"↑ {ebar(pct)} {pct}%")),
+                                                               self.q.put(("energy", "up", pct,
+                                                                           f"↑ {h.get('name', '')}   {sp}"))))
                     self.q.put(("upload", code, "done" if ok else "error", dest if ok else msg))
                     continue
-                self.q.put(("upload", code, "uploading", "↑  0%"))
+                self.q.put(("upload", code, "uploading", f"↑ {ebar(0)} 0%"))
+                self.q.put(("energy", "up", 0, f"↑ {h.get('name', '')}"))
                 flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
                 bw = str(self.cfg.get("bwlimit", "") or "").strip()
                 p = subprocess.Popen([r, "--config", str(RCLONE_CONF), "copyto", path, f"{dest}/{os.path.basename(path)}",
@@ -5351,7 +5598,9 @@ class App(tk.Tk):
                     m = re.search(r"(\d{1,3})%", line)
                     if m and m.group(1) != last:
                         last = m.group(1)
-                        self.q.put(("upload", code, "uploading", f"↑  {last}%"))
+                        sp = re.search(r"([\d.]+\s*[KMG]i?B/s)", line)
+                        self.q.put(("upload", code, "uploading", f"↑ {ebar(last)} {last}%"))
+                        self.q.put(("energy", "up", last, f"↑ {h.get('name', '')}   " + (sp.group(1) if sp else "")))
                 rc = p.wait()
                 if rc == 0:
                     self.q.put(("upload", code, "done", dest))
@@ -5363,6 +5612,11 @@ class App(tk.Tk):
     def _on_upload_msg(self, code, state, info):
         if state in ("done", "error"):
             self.up_queued.discard(code)
+            nm = (self.history.get(code) or {}).get("name", "")
+            if state == "done":
+                self._energy_set("up", 100, f"✔ Đã lưu: {nm}")
+            else:
+                self._energy_set("up", 0, f"⚠ Lỗi lưu: {nm}")
         h = self.history.get(code)
         if not h:
             return
@@ -5471,6 +5725,8 @@ class App(tk.Tk):
             self.cfg["extensions"] = self.ext_var.get().strip()
             self.cfg["bwlimit"] = re.sub(r"\s+", "", self.bw_var.get())
             self.cfg["iphone_on"] = self.iphone_on_var.get()
+            self.cfg["rd_autostart"] = self.rdauto_var.get()
+            self.cfg["raidrive_exe"] = self.rdexe_var.get().strip()
             self.cfg["iphone_dir"] = self.iphone_dir_var.get().strip() or default_iphone_dir()
             self.cfg["copy_threads"] = 1
             try:

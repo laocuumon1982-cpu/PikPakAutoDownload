@@ -1,6 +1,13 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v2.8  (04/11/2026)
+  - Giao diện mới tươi sáng: nền trắng, nút tím violet, thanh bên tím đậm, số liệu có màu.
+  - Bảng tiến trình ở tab Quét & Tải: % + thanh năng lượng cho file đang tải, upload My PikPak và tổng đợt.
+    Cột Trạng thái cũng hiện thanh năng lượng ▰▰▰▱▱ kèm %.
+  - Mở tool mà RaiDrive chưa chạy thì tự mở RaiDrive và chờ ổ kết nối (cũng tự mở khi bấm Quét & Tải).
+    Bật/tắt và chọn đường dẫn RaiDrive.exe ở Cài đặt > RaiDrive (để trống = tự tìm).
+
 v2.7  (04/11/2026)
   - Mỗi tập tải xong tự copy thêm 1 bản vào thư mục COPY TO IPHONE
     (mặc định C:\Users\<tên>\Downloads\Video\COPY TO IPHONE). Bật/tắt và nút "Chọn..." đổi thư mục ở
