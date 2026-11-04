@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Auto Download - PikPak v3.1 by Duy Anh
+Auto Download - PikPak v3.2 by Duy Anh
 - Quét các thư mục phim (ổ RaiDrive mount PikPak WebDAV, hoặc link chia sẻ PikPak), tìm tập mới
 - Tải tập mới về máy (rclone - nhanh, tải tiếp được), copy 1 bản sang ổ HDD rời theo tên phim,
   đồng thời lưu 1 bản vào My PikPak (sao chép trên máy chủ PikPak, không tốn mạng)
@@ -41,7 +41,7 @@ except Exception:
     TRAY_OK = False
 
 APP_TITLE = "Auto Download - PikPak"
-APP_VERSION = "v3.1 by Duy Anh"
+APP_VERSION = "v3.2 by Duy Anh"
 APP_NAME = f"{APP_TITLE} {APP_VERSION}"
 BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 DATA_DIR = BASE / "Data"                # v5.9: mọi dữ liệu nằm trong Data\ -> lên bản mới chỉ cần chép thư mục Data
@@ -102,89 +102,53 @@ STALE_FOLDER_DAYS = 14        # thư mục 14 ngày không có tập mới -> c�
 CATCHUP_MAX_DAYS = 14         # quét bù tối đa 14 ngày khi tool không chạy
 WATCH_STATUSES = (STATUS_OPENED, STATUS_DL)
 
-# ----- màu giao diện (v2.8: Tươi sáng - tím violet + trắng, thanh bên tím đậm)
-C_BG = "#eef1f8"             # nền cửa sổ
-C_CARD = "#ffffff"           # khung nội dung
-C_PANEL = "#f5f7fc"          # ô / bảng điều khiển bên trong
+# ----- màu giao diện (v3.2: dịu mắt - nền xám nhạt, xanh dương trầm, thanh bên xám than)
+C_BG = "#eef1f4"             # nền cửa sổ
+C_CARD = "#fbfcfd"           # khung nội dung
+C_PANEL = "#f4f6f8"          # ô / bảng điều khiển bên trong
 C_FIELD = "#ffffff"          # ô nhập
-C_ACCENT = "#6c4cff"         # tím violet tươi
-C_ACCENT_HOVER = "#5a38f5"
-C_ACCENT_DIS = "#cfc6ff"
-C_ON_ACCENT = "#ffffff"      # chữ trên nút tím
-C_SOFT = "#f3f0ff"           # nền thanh công cụ
-C_SOFT_BORDER = "#ddd5ff"
-C_SEL = "#e7e1ff"            # dòng đang chọn
-C_HEAD = "#f3f0ff"           # tiêu đề bảng
-C_ODD = "#fafbfe"            # dòng lẻ
-C_TEXT = "#1e2235"
-C_MUTED = "#6b7390"
-C_BORDER = "#e1e5f0"
-C_GREEN = "#10b981"
-C_ORANGE = "#f59e0b"
-C_RED = "#ef4444"
-C_BLUE = "#0ea5e9"           # "mới" - xanh cyan
-C_WARN_BG = "#fff6e0"
-C_SIDE = "#2d1b8a"
-C_SIDE_CARD = "#3a28a0"
-C_SIDE_HOVER = "#4a36b8"
-C_SIDE_ACTIVE = "#ffd166"
+C_ACCENT = "#2f6fb5"         # xanh dương trầm
+C_ACCENT_HOVER = "#255d99"
+C_ACCENT_DIS = "#b9cde3"
+C_ON_ACCENT = "#ffffff"      # chữ trên nút xanh
+C_SOFT = "#eaf1f8"           # nền thanh công cụ
+C_SOFT_BORDER = "#cfdeee"
+C_SEL = "#dbe8f5"            # dòng đang chọn
+C_HEAD = "#eef2f6"           # tiêu đề bảng
+C_ODD = "#f7f9fb"            # dòng lẻ
+C_TEXT = "#24303d"
+C_MUTED = "#687585"
+C_BORDER = "#d9e0e7"
+C_GREEN = "#2e9e6a"
+C_ORANGE = "#d98b1f"
+C_RED = "#d64545"
+C_BLUE = "#2f86c9"           # "mới" - xanh cyan
+C_WARN_BG = "#fdf4e3"
+C_SIDE = "#263240"
+C_SIDE_CARD = "#2f3c4b"
+C_SIDE_HOVER = "#38475a"
+C_SIDE_ACTIVE = "#5fb3e8"
 SIDE_W = 430          # thanh bên trái (mở rộng)
 SIDE_W_MINI = 64      # thanh bên trái (thu gọn)
 SIDE_MIN, SIDE_MAX = 240, 700   # giới hạn khi kéo đổi độ rộng
-C_SIDE_TEXT = "#f2efff"
-C_SIDE_MUTED = "#b4a9e8"
+C_SIDE_TEXT = "#e3e9ef"
+C_SIDE_MUTED = "#9aa8b6"
 # màu phụ (đổi theo giao diện)
-C_BTN_HOVER = "#ece8ff"
-C_DIS_TEXT = "#a8aec4"
-C_DANGER_BG, C_DANGER_BORDER, C_DANGER_HOVER, C_DANGER_DIS = "#fdecec", "#f8c4c4", "#fbd5d5", "#e6a3a3"
-C_TROUGH = "#e4e0fb"
-C_SCROLL_ACT = "#d3d0f0"
-C_SKIP = "#9aa1b8"
-C_SIDE_OK, C_SIDE_BAD = "#86efac", "#fca5a5"
-C_ERR_BG, C_ERR_FG = "#7a1f4a", "#ffd6e0"
-C_FOOT = "#9d90de"
-C_LOG_BG, C_LOG_FG = "#1b1640", "#b9f6dc"
-C_CHECK_BORDER = "#b8bdd4"
-C_GLYPH = "#c3bdf0"
-ENERGY_EMPTY = "#e9e6fb"
+C_BTN_HOVER = "#e6eef6"
+C_DIS_TEXT = "#a7b1bc"
+C_DANGER_BG, C_DANGER_BORDER, C_DANGER_HOVER, C_DANGER_DIS = "#fbeeee", "#f0c9c9", "#f6dcdc", "#e2a9a9"
+C_TROUGH = "#dde4ec"
+C_SCROLL_ACT = "#c4cfdb"
+C_SKIP = "#9aa5b1"
+C_SIDE_OK, C_SIDE_BAD = "#8fd9b0", "#f2a7a7"
+C_ERR_BG, C_ERR_FG = "#5a2a2f", "#ffdcdc"
+C_FOOT = "#7f8e9e"
+C_LOG_BG, C_LOG_FG = "#1f2933", "#c9e8d6"
+C_CHECK_BORDER = "#b5c0cc"
+C_GLYPH = "#c3ccd6"
+ENERGY_EMPTY = "#e3e9ef"
 ENERGY_SETS = {}              # màu riêng cho từng thanh (dl / up / all); trống = dùng ENERGY_COLORS
 
-# ----- 2 giao diện: "pro" (mới - trắng · cam · xanh dương, menu ngang) / "classic" (cũ - tím, thanh bên trái)
-THEMES = {
-    "classic": {},           # = các giá trị ở trên
-    "pro": {
-        "C_BG": "#f4f6fa", "C_CARD": "#ffffff", "C_PANEL": "#f8fafc", "C_FIELD": "#ffffff",
-        "C_ACCENT": "#f97316", "C_ACCENT_HOVER": "#ea580c", "C_ACCENT_DIS": "#fed7aa", "C_ON_ACCENT": "#ffffff",
-        "C_SOFT": "#fff7ed", "C_SOFT_BORDER": "#fed7aa", "C_SEL": "#dbeafe", "C_HEAD": "#f1f5f9",
-        "C_ODD": "#fafbfd", "C_TEXT": "#0f172a", "C_MUTED": "#64748b", "C_BORDER": "#e2e8f0",
-        "C_GREEN": "#16a34a", "C_ORANGE": "#f97316", "C_RED": "#dc2626", "C_BLUE": "#2563eb",
-        "C_WARN_BG": "#fff7ed",
-        "C_SIDE": "#0b3a8c", "C_SIDE_CARD": "#134aa8", "C_SIDE_HOVER": "#1a55bd", "C_SIDE_ACTIVE": "#fb923c",
-        "C_SIDE_TEXT": "#dbe6fb", "C_SIDE_MUTED": "#9db5e3",
-        "C_BTN_HOVER": "#eff6ff", "C_DIS_TEXT": "#a0aec0",
-        "C_DANGER_BG": "#fef2f2", "C_DANGER_BORDER": "#fecaca", "C_DANGER_HOVER": "#fee2e2", "C_DANGER_DIS": "#f0b4b4",
-        "C_TROUGH": "#e2e8f0", "C_SCROLL_ACT": "#cbd5e1", "C_SKIP": "#94a3b8",
-        "C_SIDE_OK": "#16a34a", "C_SIDE_BAD": "#dc2626", "C_ERR_BG": "#fef2f2", "C_ERR_FG": "#b91c1c",
-        "C_FOOT": "#94a3b8", "C_LOG_BG": "#0f1e3d", "C_LOG_FG": "#cfe3ff", "C_CHECK_BORDER": "#cbd5e1",
-        "C_GLYPH": "#cbd5e1", "ENERGY_EMPTY": "#e8edf5",
-        "ENERGY_COLORS": ("#fdba74", "#fb923c", "#f97316", "#ea580c"),
-        "ENERGY_SETS": {"dl": ("#fdba74", "#fb923c", "#f97316", "#ea580c"),
-                        "up": ("#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"),
-                        "all": ("#fb923c", "#f97316", "#ea580c", "#c2410c")},
-    },
-}
-THEME_NAMES = {"pro": "Giao diện mới  (trắng · cam · xanh dương, menu ngang)",
-               "classic": "Giao diện cũ  (tím, thanh bên trái)"}
-UI_THEME = "classic"
-
-
-def apply_theme(name):
-    """Đổi bảng màu toàn cục (gọi trước khi dựng giao diện)."""
-    global UI_THEME
-    name = name if name in THEMES else "pro"
-    globals().update(THEMES[name])
-    UI_THEME = name
-    return name
 FONT = "Segoe UI"
 MONO = "Consolas"             # số liệu kiểu màn hình máy
 
@@ -811,10 +775,10 @@ def hide_raidrive_windows(timeout=120, settle=25, log=None):
             break
         time.sleep(0.5)
     if not hidden and log:
-        found = raidrive_windows()
-        log("⚠ Không thấy cửa sổ RaiDrive để thu nhỏ" + (": " + "; ".join(
-            f"{t} [{p}] {'hiện' if v else 'ẩn'}" for _h, t, p, v in found[:5]) if found else
-            " (RaiDrive có thể đã tự nằm dưới khay)."))
+        if raidrive_windows():
+            log("▣ RaiDrive đang nằm dưới khay hệ thống.")
+        else:
+            log("⚠ Không thấy cửa sổ RaiDrive để thu nhỏ.")
     return hidden
 
 
@@ -831,7 +795,8 @@ def find_raidrive_exe(custom=""):
     for b in bases:
         if not b:
             continue
-        for sub in (r"RaiDrive\RaiDrive.exe", r"OpenBoxLab\RaiDrive\RaiDrive.exe"):
+        for sub in (r"OpenBoxLab\RaiDrive Mount\RaiDrive.Mount.exe", r"RaiDrive\RaiDrive.exe",
+                    r"OpenBoxLab\RaiDrive\RaiDrive.exe", r"RaiDrive Mount\RaiDrive.Mount.exe"):
             c = os.path.join(b, sub)
             if os.path.isfile(c):
                 return c
@@ -1357,24 +1322,69 @@ def copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
         return False, f"{type(e).__name__}: {e}"
 
 
+class _WriteError(OSError):
+    """Lỗi ghi ra ổ đích (đầy ổ, rút ổ...) - không thử lại."""
+
+
+COPY_READ_RETRIES = 12        # ổ RaiDrive (WebDAV) đọc lỗi giữa chừng -> mở lại file, đọc tiếp từ chỗ dừng
+
+
 def _copy_with_progress(src, dst, progress=None, stop=None, chunk=4 << 20):
+    """Copy 1 luồng. Ổ RaiDrive hay báo lỗi đọc giữa chừng (VD FileNotFoundError khi WebDAV chập chờn):
+    không bỏ cả file mà chờ vài giây, mở lại file nguồn và ĐỌC TIẾP từ đúng chỗ đã copy (tối đa
+    COPY_READ_RETRIES lần liên tiếp không tiến thêm được byte nào)."""
     total = os.path.getsize(src)
     part = dst + ".part"
-    done = 0                                   # copy lại từ đầu (file .part dở đã bị xóa khi lỗi)
-    t0, d0 = time.time(), done
-    with open(src, "rb") as fi, open(part, "wb") as fo:
-        fi.seek(done)
+    done, fails, last_err = 0, 0, ""
+    t0, d0 = time.time(), 0
+    with open(part, "wb") as fo:
         while True:
             if stop is not None and stop.is_set():
                 return False, "Đã dừng"
-            b = fi.read(chunk)
-            if not b:
+            try:
+                with open(src, "rb") as fi:
+                    if done:
+                        fi.seek(done)
+                    while True:
+                        if stop is not None and stop.is_set():
+                            return False, "Đã dừng"
+                        b = fi.read(chunk)
+                        if not b:
+                            break
+                        try:
+                            fo.write(b)
+                        except OSError as we:
+                            raise _WriteError(we.errno, f"Lỗi ghi file đích: {we}") from we
+                        done += len(b)
+                        fails = 0
+                        if progress and total:
+                            el = max(0.5, time.time() - t0)
+                            progress(done * 100 // total, human_size((done - d0) / el) + "/s")
+                if total and done < total:
+                    raise OSError(5, f"đọc thiếu dữ liệu ({human_size(done)} / {human_size(total)})")
                 break
-            fo.write(b)
-            done += len(b)
-            if progress and total:
-                el = max(0.5, time.time() - t0)
-                progress(done * 100 // total, human_size((done - d0) / el) + "/s")
+            except _WriteError:
+                raise
+            except OSError as e:
+                fails += 1
+                last_err = f"{type(e).__name__}: {e}"
+                if fails > COPY_READ_RETRIES:
+                    raise OSError(getattr(e, "errno", None) or 5,
+                                  f"{last_err} (đã thử đọc tiếp {COPY_READ_RETRIES} lần)") from e
+                wait = min(30, 3 * fails)
+                if progress and total:
+                    progress(done * 100 // total, f"⟳ ổ RaiDrive lỗi đọc - đọc tiếp sau {wait}s "
+                                                  f"({fails}/{COPY_READ_RETRIES})")
+                if stop is not None:
+                    if stop.wait(wait):
+                        return False, "Đã dừng"
+                else:
+                    time.sleep(wait)
+                try:
+                    fo.flush()
+                except OSError as we:
+                    raise _WriteError(we.errno, f"Lỗi ghi file đích: {we}") from we
+                t0, d0 = time.time(), done
     os.replace(part, dst)
     try:
         st = os.stat(src)
@@ -1652,7 +1662,7 @@ def _mix(c1, c2, t):
     return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(a, b))
 
 
-ENERGY_COLORS = ("#8b5cf6", "#6366f1", "#0ea5e9", "#06b6d4", "#10b981", "#22c55e")
+ENERGY_COLORS = ("#5fb3e8", "#3d9ad6", "#2f86c9", "#2aa198", "#2e9e6a", "#3fb27f")
 
 
 class EnergyBar(tk.Canvas):
@@ -1683,7 +1693,7 @@ class EnergyBar(tk.Canvas):
         if w < 20:
             return
         gap = 3
-        n = self.seg
+        n = max(8, min(self.seg, int(w // 14)))      # cửa sổ hẹp -> ít ô hơn, ô không bị mảnh như mã vạch
         sw = (w - gap * (n - 1)) / n
         full = self.pct / 100 * n
         for i in range(n):
@@ -1700,11 +1710,7 @@ class EnergyBar(tk.Canvas):
 class App(tk.Tk):
     def __init__(self, auto=False, startup=False):
         super().__init__()
-        try:
-            _disk = load_json(CONFIG_FILE, {})
-        except Exception:
-            _disk = {}
-        self.layout = apply_theme((_disk or {}).get("ui_theme", "pro") if isinstance(_disk, dict) else "pro")
+        self.layout = "classic"
         self.title(APP_NAME)
         self.geometry(f"{min(1480, max(1100, self.winfo_screenwidth() - 60))}x800")
         self._normal_geom = None
@@ -1760,19 +1766,15 @@ class App(tk.Tk):
         self._style()
         self._install_edit_bindings()
         self._make_check_images()
-        self.theme_var = tk.StringVar(value=self.layout)
         body = tk.Frame(self, bg=C_BG)
         body.pack(fill="both", expand=True)
-        if self.layout == "pro":
-            self._build_pro_layout(body)
-        else:
-            main = tk.Frame(body, bg=C_BG)
-            self._build_header(main)
-            self._build_statusbar(main)
-            nb = self._make_notebook(main)
-            self._build_sidebar(body)
-            main.pack(side="left", fill="both", expand=True)
-            nb.pack(fill="both", expand=True, padx=18, pady=(16, 0))
+        main = tk.Frame(body, bg=C_BG)
+        self._build_header(main)
+        self._build_statusbar(main)
+        nb = self._make_notebook(main)
+        self._build_sidebar(body)
+        main.pack(side="left", fill="both", expand=True)
+        nb.pack(fill="both", expand=True, padx=18, pady=(16, 0))
 
         self._build_scan()
         self._build_folders()
@@ -1989,181 +1991,11 @@ class App(tk.Tk):
             nb.add(fr)
         return nb
 
-    NAV_ITEMS = (("folders", "▦", "Thư mục phim"), ("scan", "⬇", "Quét & Tải"),
-                 ("history", "☰", "Lịch sử tải"), ("settings", "⚙", "Cài đặt"))
-
-    def _build_pro_layout(self, body):
-        """Giao diện mới: thanh tiêu đề xanh dương + menu ngang, dải trạng thái trắng, nội dung toàn chiều rộng."""
-        hdr = tk.Frame(body, bg=C_SIDE)
-        hdr.pack(fill="x")
-        tk.Frame(body, bg=C_ACCENT, height=3).pack(fill="x")         # vạch cam dưới thanh tiêu đề
-        strip = tk.Frame(body, bg=C_CARD)
-        strip.pack(fill="x")
-        tk.Frame(body, bg=C_BORDER, height=1).pack(fill="x")
-        self.alerts = tk.Frame(body, bg=C_BG)
-        self.alerts.pack(fill="x", padx=18)
-        main = tk.Frame(body, bg=C_BG)
-        main.pack(fill="both", expand=True)
-        tr = tk.Frame(main, bg=C_BG)
-        tr.pack(fill="x", padx=24, pady=(14, 0))
-        self.top_title = tk.Label(tr, text="", bg=C_BG, fg=C_TEXT, font=(FONT, 16, "bold"), anchor="w")
-        self.top_title.pack(side="left")
-        self.top_sub = tk.Label(tr, text="", bg=C_BG, fg=C_MUTED, font=(FONT, 9), anchor="w")
-        self.top_sub.pack(side="left", padx=(14, 0), pady=(6, 0))
-        self._build_statusbar(main)
-        nb = self._make_notebook(main)
-        nb.pack(fill="both", expand=True, padx=18, pady=(10, 0))
-
-        # ----- thanh tiêu đề: logo + tên | menu ngang | cập nhật · giao diện · tự quét
-        inner = tk.Frame(hdr, bg=C_SIDE)
-        inner.pack(fill="x", padx=(18, 14))
-        brand = tk.Frame(inner, bg=C_SIDE)
-        brand.pack(side="left", pady=10)
-        if self.icon_small:
-            tk.Label(brand, image=self.icon_small, bg=C_SIDE).pack(side="left", padx=(0, 10))
-        bt = tk.Frame(brand, bg=C_SIDE)
-        bt.pack(side="left")
-        tk.Label(bt, text=APP_TITLE, bg=C_SIDE, fg="#ffffff", font=(FONT, 12, "bold")).pack(anchor="w")
-        tk.Label(bt, text=APP_VERSION, bg=C_SIDE, fg=C_SIDE_MUTED, font=(FONT, 8)).pack(anchor="w")
-        tk.Frame(inner, bg=C_SIDE_HOVER, width=1).pack(side="left", fill="y", padx=(22, 10), pady=12)
-        navf = tk.Frame(inner, bg=C_SIDE)
-        navf.pack(side="left", fill="y")
-        self.nav = {}
-        frames = {"folders": self.tab_folders, "scan": self.tab_scan, "history": self.tab_history,
-                  "settings": self.tab_settings}
-        for n, (key, icon, text) in enumerate(self.NAV_ITEMS, 1):
-            col = tk.Frame(navf, bg=C_SIDE, cursor="hand2")
-            col.pack(side="left", fill="y", padx=2)
-            bar = tk.Frame(col, bg=C_SIDE, height=3)
-            bar.pack(side="bottom", fill="x")
-            row = tk.Frame(col, bg=C_SIDE, padx=12)
-            row.pack(fill="both", expand=True)
-            ic = tk.Label(row, text=icon, bg=C_SIDE, fg=C_SIDE_MUTED, font=(FONT, 12))
-            ic.pack(side="left", padx=(0, 6))
-            lb = tk.Label(row, text=text, bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 10, "bold"))
-            lb.pack(side="left")
-            badge = tk.Label(row, text="", bg=C_ACCENT, fg=C_ON_ACCENT, font=(MONO, 8, "bold"), padx=6)
-            self.nav[key] = {"row": row, "bar": bar, "icon": ic, "label": lb, "badge": badge, "frame": frames[key],
-                             "col": col}
-            for w in (col, row, ic, lb, badge):
-                w.bind("<Button-1>", lambda e, k=key: self.select_page(k))
-                w.bind("<Enter>", lambda e, k=key: self._nav_hover(k, True))
-                w.bind("<Leave>", lambda e, k=key: self._nav_hover(k, False))
-            self.bind_all(f"<Control-Key-{n}>", lambda e, k=key: self.select_page(k))
-        right = tk.Frame(inner, bg=C_SIDE)
-        right.pack(side="right")
-        self.top_auto = tk.Label(right, text="", bg=C_SIDE_CARD, fg="#ffffff", font=(FONT, 9, "bold"),
-                                 padx=12, pady=6, cursor="hand2")
-        self.top_auto.pack(side="right")
-        self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("gen")))
-        self.top_theme = self._theme_button(right, C_SIDE, C_SIDE_TEXT, C_SIDE_HOVER)
-        self.top_theme.pack(side="right", padx=(0, 8))
-        self.top_upd = tk.Label(right, text="⟳  Cập nhật", bg=C_SIDE, fg=C_SIDE_TEXT, font=(FONT, 9, "bold"),
-                                padx=12, pady=6, cursor="hand2", highlightbackground=C_SIDE_HOVER,
-                                highlightthickness=1)
-        self.top_upd.pack(side="right", padx=(0, 8))
-        self.top_upd.bind("<Button-1>", lambda e: self.check_update(silent=False))
-        self.header_auto_text = ""
-
-        # ----- dải trạng thái: Thư viện · RaiDrive · PikPak · Tự động · Quét lần cuối · Sao lưu · Máy
-        si = tk.Frame(strip, bg=C_CARD, padx=22, pady=8)
-        si.pack(fill="x")
-
-        def chip(title, last=False):
-            f = tk.Frame(si, bg=C_CARD)
-            f.pack(side="left", padx=(0, 0 if last else 12), fill="y")
-            tk.Label(f, text=title, bg=C_CARD, fg=C_MUTED, font=(FONT, 7, "bold")).pack(anchor="w")
-            if not last:
-                tk.Frame(si, bg=C_BORDER, width=1).pack(side="left", fill="y", padx=(0, 12), pady=2)
-            return f
-        c = chip("THƯ VIỆN")
-        self.side_owned = tk.Label(c, text="", bg=C_CARD, fg=C_GREEN, font=(FONT, 10, "bold"), anchor="w")
-        self.side_owned.pack(anchor="w")
-        c = chip("RAIDRIVE")
-        self.side_rd = tk.Label(c, text="▣ RaiDrive: đang kiểm tra...", bg=C_CARD, fg=C_MUTED, font=(FONT, 9),
-                                anchor="w", justify="left", wraplength=240, cursor="hand2")
-        self.side_rd.pack(anchor="w")
-        self.side_rd.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("raidrive")))
-        c = chip("MY PIKPAK")
-        self.side_pk = tk.Label(c, text="☁ PikPak: đang kiểm tra...", bg=C_CARD, fg=C_MUTED, font=(FONT, 9),
-                                anchor="w", justify="left", wraplength=300, cursor="hand2")
-        self.side_pk.pack(anchor="w")
-        self.side_pk.bind("<Button-1>", lambda e: self.get_rclone() if not find_rclone() else (
-            self.select_page("settings"), self._settings_page("pikpak")))
-        c = chip("TỰ ĐỘNG")
-        r = tk.Frame(c, bg=C_CARD)
-        r.pack(anchor="w")
-        ttk.Checkbutton(r, text="Tự quét mỗi", variable=self.auto_var, command=self._auto_changed).pack(side="left")
-        cb = ttk.Combobox(r, textvariable=self.interval_var, values=INTERVAL_CHOICES, width=4, state="readonly")
-        cb.pack(side="left", padx=4)
-        cb.bind("<<ComboboxSelected>>", lambda e: self._auto_changed())
-        tk.Label(r, text="phút", bg=C_CARD, fg=C_TEXT, font=(FONT, 9)).pack(side="left")
-        self.side_auto = tk.Label(r, text="", bg=C_CARD, fg=C_ACCENT, font=(FONT, 9, "bold"), anchor="w")
-        self.side_auto.pack(side="left", padx=(10, 0))
-        c = chip("QUÉT LẦN CUỐI")
-        self.side_last = tk.Label(c, text="Chưa quét lần nào", bg=C_CARD, fg=C_TEXT, font=(FONT, 9), anchor="w",
-                                  justify="left", wraplength=280)
-        self.side_last.pack(anchor="w")
-        c = chip("SAO LƯU · MÁY", last=True)
-        self.side_bk = tk.Label(c, text="", bg=C_CARD, fg=C_MUTED, font=(FONT, 9), anchor="w")
-        self.side_bk.pack(anchor="w")
-        if self.cfg.get("last_backup"):
-            self.side_bk.config(text="⟲ " + self.cfg["last_backup"])
-        tk.Label(c, text=f"⌂ {MACHINE}", bg=C_CARD, fg=C_MUTED, font=(FONT, 8), anchor="w").pack(anchor="w")
-        # cảnh báo (kiểm tra sức khỏe, báo cáo lỗi) - dải riêng dưới dải trạng thái
-        self.side_health = tk.Label(self.alerts, text="", bg=C_WARN_BG, fg=C_ORANGE, font=(FONT, 9, "bold"),
-                                    anchor="w", justify="left", padx=10, pady=6, wraplength=1200)
-        self.side_err = tk.Label(self.alerts, text="", bg=C_ERR_BG, fg=C_ERR_FG, font=(FONT, 9, "bold"), anchor="w",
-                                 justify="left", cursor="hand2", padx=10, pady=6)
-        self.side_err.bind("<Button-1>", self.copy_last_report)
-        self.side_foot = tk.Label(self.alerts, text="", bg=C_BG)
-        self._side_wraps = []
-
     def _set_last(self, summary):
         try:
-            self.side_last.config(text=summary if self.layout == "pro" else "Quét lần cuối:\n" + summary)
+            self.side_last.config(text="Quét lần cuối:\n" + summary)
         except (AttributeError, tk.TclError):
             pass
-
-    # ----- đổi giao diện
-    def _theme_button(self, parent, bg, fg, hover):
-        b = tk.Label(parent, text="◐  Giao diện", bg=bg, fg=fg, font=(FONT, 9, "bold"), padx=12, pady=6,
-                     cursor="hand2", highlightbackground=hover, highlightthickness=1)
-        b.bind("<Enter>", lambda e: b.config(bg=hover))
-        b.bind("<Leave>", lambda e: b.config(bg=bg))
-        b.bind("<Button-1>", lambda e: self._theme_menu(b))
-        return b
-
-    def _theme_menu(self, widget):
-        m = tk.Menu(self, tearoff=0)
-        for key in ("pro", "classic"):
-            m.add_radiobutton(label=THEME_NAMES[key], variable=self.theme_var, value=key,
-                              command=lambda k=key: self.switch_theme(k))
-        try:
-            m.tk_popup(widget.winfo_rootx(), widget.winfo_rooty() + widget.winfo_height() + 2)
-        finally:
-            m.grab_release()
-
-    def switch_theme(self, name):
-        """Đổi giao diện: lưu lựa chọn rồi khởi động lại tool."""
-        if name not in THEMES:
-            return
-        if name == self.layout:
-            self.theme_var.set(name)
-            return
-        if self.worker and self.worker.is_alive():
-            messagebox.showinfo(APP_NAME, "Tool đang quét / tải - đợi xong rồi đổi giao diện.")
-            self.theme_var.set(self.layout)
-            return
-        if not messagebox.askyesno(APP_NAME, f"Chuyển sang:\n{THEME_NAMES[name]}\n\nTool sẽ tự khởi động lại "
-                                             "(dữ liệu, cài đặt giữ nguyên)."):
-            self.theme_var.set(self.layout)
-            return
-        self.cfg["ui_theme"] = name
-        self.save_config()
-        self.save_history()
-        restart_self()
-        self.quit_app(force=True)
 
     def _build_sidebar(self, parent):
         self.side_w = max(SIDE_MIN, min(SIDE_MAX, int(self.cfg.get("side_w", SIDE_W) or SIDE_W)))
@@ -3389,10 +3221,7 @@ class App(tk.Tk):
         try:
             if probs:
                 self.side_health.config(text="⚠ " + "\n⚠ ".join(probs))
-                if self.layout == "pro":
-                    self.side_health.pack(fill="x", pady=(8, 0))
-                else:
-                    self.side_health.pack(fill="x", pady=(4, 0), before=self.side_pk)
+                self.side_health.pack(fill="x", pady=(4, 0), before=self.side_pk)
             else:
                 self.side_health.pack_forget()
         except (AttributeError, tk.TclError):
@@ -3630,7 +3459,9 @@ class App(tk.Tk):
         self.q.put(("hist", fcode, h))
         self.q.put(("rowstatus", fcode, f"⚠  {status} (lần {tries}/{MAX_TRIES}): {msg[:80]}", "err"))
         self.log(f"⚠ [{name}] {status}: {msg}")
-        self.report_error(f"{status}: {name}", msg, item=item, exc=getattr(self, "_last_exc", None))
+        if tries >= 2:      # lần đầu lỗi -> tool tự tải lại; chỉ tạo báo cáo khi tải lại vẫn lỗi
+            self.report_error(f"{status} (lần {tries}): {name}", msg, item=item,
+                              exc=getattr(self, "_last_exc", None))
         self._last_exc = None
 
     def _remove_broken(self, dst, size, force=False):
@@ -3706,7 +3537,7 @@ class App(tk.Tk):
         try:
             if n:
                 self.side_err.config(text=f"⚠ {n} báo cáo lỗi - bấm để COPY báo cáo mới nhất (dán vào Claude)")
-                self.side_err.pack(fill="x", pady=(8 if self.layout == "pro" else 6, 0))
+                self.side_err.pack(fill="x", pady=(6, 0))
             else:
                 self.side_err.pack_forget()
         except (AttributeError, tk.TclError):
@@ -4302,8 +4133,6 @@ class App(tk.Tk):
                                 padx=12, pady=6, cursor="hand2", highlightbackground=C_BORDER, highlightthickness=1)
         self.top_upd.pack(side="right", padx=(0, 10))
         self.top_upd.bind("<Button-1>", lambda e: self.check_update(silent=False))
-        self.top_theme = self._theme_button(inner, C_CARD, C_MUTED, C_SOFT)
-        self.top_theme.pack(side="right", padx=(0, 10))
         self.top_auto.bind("<Button-1>", lambda e: (self.select_page("settings"), self._settings_page("gen")))
         self.header_auto_text = ""
 
@@ -4316,15 +4145,6 @@ class App(tk.Tk):
             self.top_sub.config(text=sub)
         except AttributeError:
             pass
-        if self.layout == "pro":
-            for k, n in self.nav.items():
-                on = k == key
-                for w in ("col", "row", "icon", "label"):
-                    n[w].config(bg=C_SIDE_CARD if on else C_SIDE)
-                n["bar"].config(bg=C_SIDE_ACTIVE if on else C_SIDE)
-                n["icon"].config(fg=C_SIDE_ACTIVE if on else C_SIDE_MUTED)
-                n["label"].config(fg="#ffffff" if on else C_SIDE_TEXT)
-            return
         for k, n in self.nav.items():
             on = k == key
             bg = C_SIDE_HOVER if on else C_SIDE
@@ -4339,16 +4159,14 @@ class App(tk.Tk):
             return
         bg = C_SIDE_HOVER if inside else C_SIDE
         n = self.nav[key]
-        for w in (("col", "row", "icon", "label", "bar") if self.layout == "pro" else ("row", "icon", "label", "bar")):
+        for w in ("row", "icon", "label", "bar"):
             n[w].config(bg=bg)
 
     def set_badge(self, key, value, color=None):
         b = self.nav[key]["badge"]
         if value:
             b.config(text=str(value), bg=color or C_ACCENT)
-            if self.layout == "pro":
-                b.pack(side="left", padx=(6, 0))
-            elif not getattr(self, "side_collapsed", False):
+            if not getattr(self, "side_collapsed", False):
                 b.pack(side="right", padx=10)
         else:
             b.config(text="")
@@ -4906,15 +4724,6 @@ class App(tk.Tk):
 
         # ----- 1. Chung
         g = G(self._set_pages["gen"])
-        g.section("Giao diện", "Chọn kiểu giao diện. Đổi xong tool tự khởi động lại, dữ liệu và cài đặt giữ nguyên. "
-                               "Cũng đổi được bằng nút ◐ Giao diện trên thanh tiêu đề.")
-        fr = g.frame()
-        names = [THEME_NAMES["pro"], THEME_NAMES["classic"]]
-        th_var = tk.StringVar(value=THEME_NAMES.get(self.layout, names[0]))
-        ttk.Combobox(fr, textvariable=th_var, values=names, width=52, state="readonly").pack(side="left")
-        ttk.Button(fr, text="✓  Áp dụng", style="Accent.TButton",
-                   command=lambda: self.switch_theme("classic" if th_var.get() == THEME_NAMES["classic"] else "pro")
-                   ).pack(side="left", padx=8)
         g.section("Tự động")
         fr = g.frame()
         ttk.Checkbutton(fr, text="Tự quét & tải mỗi", variable=self.auto_var, command=self._auto_changed).pack(side="left")

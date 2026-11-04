@@ -1,6 +1,14 @@
 AUTO DOWNLOAD - PIKPAK by Duy Anh - NHẬT KÝ PHIÊN BẢN
 =================================================
 
+v3.2  (04/11/2026)
+  - Sửa lỗi copy từ ổ RaiDrive bị "FileNotFoundError" giữa chừng (file lớn 2-3 GB): không bỏ cả file nữa mà
+    chờ vài giây, mở lại file và ĐỌC TIẾP từ đúng chỗ đang copy (tối đa 12 lần), cột Trạng thái hiện
+    "⟳ ổ RaiDrive lỗi đọc - đọc tiếp...". Chỉ tạo báo cáo lỗi khi tải lại vẫn hỏng.
+  - Nhận RaiDrive Mount (RaiDrive.Mount.exe). RaiDrive đã nằm dưới khay thì không báo cảnh báo nữa.
+  - Bỏ giao diện mới (menu ngang), giữ bố cục cũ (thanh bên trái). Đổi màu dịu mắt, không dùng màu tím:
+    nền xám nhạt, chữ xám than, nút xanh dương trầm, thanh bên xám than; thanh năng lượng xanh dương → xanh lá.
+
 v3.1  (04/11/2026)
   - Thêm GIAO DIỆN MỚI (mặc định): tông trắng · cam · xanh dương, bố cục khác hẳn bản cũ:
     · thanh tiêu đề xanh dương với menu ngang (Thư mục phim · Quét & Tải · Lịch sử · Cài đặt), vạch cam;

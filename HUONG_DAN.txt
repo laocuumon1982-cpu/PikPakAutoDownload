@@ -1,4 +1,4 @@
-AUTO DOWNLOAD - PIKPAK v3.1 by Duy Anh - HƯỚNG DẪN
+AUTO DOWNLOAD - PIKPAK v3.2 by Duy Anh - HƯỚNG DẪN
 ===================================================
 
 NGUYÊN LÝ (giống Fshare Auto Download)
@@ -10,7 +10,6 @@ NGUYÊN LÝ (giống Fshare Auto Download)
                                                            chạy nền song song với file kế tiếp)
    - COPY TO IPHONE: mỗi tập tải xong copy thêm 1 bản vào C:\Users\<tên>\Downloads\Video\COPY TO IPHONE
      (bật/tắt, đổi thư mục: Cài đặt > Chung > Copy & Save).
-   - Giao diện: nút "◐ Giao diện" trên thanh tiêu đề để chọn giao diện mới (trắng · cam · xanh dương) hoặc cũ (tím).
    - RaiDrive chưa mở thì tool tự mở RaiDrive khi khởi động rồi thu nhỏ RaiDrive xuống khay (Cài đặt > RaiDrive).
    Tool quét nguồn, chỉ lấy tập CHƯA có trong "Danh sách đã có" -> copy về HDD -> upload My PikPak
    -> thêm vào Danh sách đã có để lần sau không tải lại.
